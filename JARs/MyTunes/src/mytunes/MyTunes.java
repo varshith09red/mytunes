@@ -13,10 +13,18 @@ public class MyTunes {
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) {
-        javax.swing.SwingUtilities.invokeLater(() -> {
-            GUI gui = new GUI();
-            gui.createAndShowGUI();
+//    public static void main(String[] args) {
+//        javax.swing.SwingUtilities.invokeLater(() -> {
+//            GUI gui = new GUI();
+//            gui.createAndShowGUI();
+//        });
+//    }
+    
+    public static void main(String args[]) {
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                new GUI1().setVisible(true);
+            }
         });
     }
     

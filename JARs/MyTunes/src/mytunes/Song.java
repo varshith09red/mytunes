@@ -1,6 +1,9 @@
 package mytunes;
 
-public class Song {
+import com.mpatric.mp3agic.Mp3File;
+import java.io.*;
+
+public class Song{
     private int id;
     private String title;
     private String artist;
@@ -9,6 +12,10 @@ public class Song {
     private String genre;
     private String comment;
     private String filePath;
+    
+    private String songLength;
+    private Mp3File mp3File;
+    private double frameRatePerMilliseconds;
 
     public Song(int id, String title, String artist, String album, String year, String genre, String comment, String filePath) {
         this.id = id;
@@ -19,8 +26,21 @@ public class Song {
         this.genre = genre;
         this.comment = comment;
         this.filePath = filePath;
+        
+        try{
+        this.mp3File = new Mp3File(filePath);
+        this.frameRatePerMilliseconds = (double) mp3File.getFrameCount() / mp3File.getLengthInMilliseconds();
+        this.songLength = convertToSongLengthFormat();
+        } catch(Exception e){
+            e.printStackTrace();
+        }
+        
     }
-
+    
+    public Song getSong(){
+        return this;
+    }
+    
     // Getters and setters
     public int getId() {
         return id;
@@ -57,4 +77,21 @@ public class Song {
     public String getFilePath() {
         return filePath;
     }
+    
+    public String getSongLength() {
+        return songLength;
+    }
+    
+    public Mp3File getMp3File(){return mp3File;}
+    public double getFrameRatePerMilliseconds(){return frameRatePerMilliseconds;}
+    
+    private String convertToSongLengthFormat(){
+        long hours = mp3File.getLengthInSeconds() / 3600;
+        long minutes = (mp3File.getLengthInSeconds() % 3600) / 60;
+        long seconds = mp3File.getLengthInSeconds() % 60;
+        String formattedTime = String.format("%d:%02d:%02d",hours, minutes, seconds);
+
+        return formattedTime;
+    }
+    
 }

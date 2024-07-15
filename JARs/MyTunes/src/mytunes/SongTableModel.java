@@ -10,13 +10,16 @@ public class SongTableModel extends AbstractTableModel {
     private List<Song> songs;
     private final String[] columnNames = { "Title", "Artist", "Album", "Year", "Genre", "Comment" };
     private TableUpdateListener tableUpdateListener;
-    private List<Boolean> columnVisibility;
+    final private List<Boolean> columnVisibility;
+    private List<Song> sortedSongs;
 
     public SongTableModel(List<Song> songs) {
         this.songs = songs;
         this.columnVisibility = new ArrayList<>();
         loadColumnVisibility();
+        this.sortedSongs = new ArrayList<>();
     }
+    
 
     @Override
     public int getRowCount() {
@@ -39,8 +42,8 @@ public class SongTableModel extends AbstractTableModel {
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         Song song = songs.get(rowIndex);
-        int visibleColumnIndex = getVisibleColumnIndex(columnIndex);
-        switch (visibleColumnIndex) {
+//        int visibleColumnIndex = getVisibleColumnIndex(columnIndex);
+        switch (columnIndex) {
             case 0:
                 return song.getTitle();
             case 1:
@@ -53,6 +56,12 @@ public class SongTableModel extends AbstractTableModel {
                 return song.getGenre();
             case 5:
                 return song.getComment();
+            case 6:
+                return song.getId();
+            case 7:
+                return song.getFilePath();
+            case 8:
+                return song.getSong();
             default:
                 return null;
         }
@@ -90,7 +99,7 @@ public class SongTableModel extends AbstractTableModel {
             }
         }
     }
-
+    
     public void setSongs(List<Song> songs) {
         this.songs = songs;
         fireTableDataChanged();
@@ -165,5 +174,24 @@ public class SongTableModel extends AbstractTableModel {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
+    }
+    
+    //for generating sorted songs list
+    public Song getSongAt(int rowIndex) {
+        return songs.get(rowIndex);
+    }
+    
+    //read sorted song at index
+    public Song getSortedSongAt(int rowIndex) {
+        return sortedSongs.get(rowIndex);
+    }
+    
+    public List<Song> getSortedSongs() {
+        return sortedSongs;
+    }
+    
+    public void setSortedSongs(List<Song> sortedSongs) {
+        this.sortedSongs = sortedSongs;  
+//        fireTableDataChanged();
     }
 }
