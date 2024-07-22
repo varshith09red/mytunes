@@ -34,9 +34,9 @@ public class CustomPlayer extends PlaybackListener {
 
     private AdvancedPlayer player;
     private String path;
-    private int total;
-    private int stopped;
-    private boolean valid;
+//    private int total;
+//    private int stopped;
+//    private boolean valid;
     private int currentSongIndex;
     
     private List<Song> songs;
@@ -45,8 +45,8 @@ public class CustomPlayer extends PlaybackListener {
     private static final Object playSignal = new Object();
     private boolean isPaused;
     private int currentFrame;
-    private Mp3File mp3File;
-    private double frameRatePerMilliseconds;
+//    private Mp3File mp3File;
+//    private double frameRatePerMilliseconds;
     
     private FloatControl volumeControl;
     private Song currentSong;
@@ -57,7 +57,7 @@ public class CustomPlayer extends PlaybackListener {
     private ArrayList<Song> playlist;
     private List<Integer> songIds;
     // we will need to keep track the index we are in the playlist
-    private int currentPlaylistIndex;
+//    private int currentPlaylistIndex;
     // track how many milliseconds has passed since playing the song (used for updating the slider)
     private int currentTimeInMilli;
     
@@ -81,8 +81,8 @@ public class CustomPlayer extends PlaybackListener {
 
     public CustomPlayer(GUI1 gui, SongTableModel songTableModel, List<Song> songs) {
         this.path = null;
-        this.total = 0;
-        this.stopped = 0;
+//        this.total = 0;
+//        this.stopped = 0;
         this.isPaused = false;
         this.currentSongIndex = 0;
         this.currentSong = null;

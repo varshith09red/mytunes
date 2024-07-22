@@ -194,4 +194,9 @@ public class SongTableModel extends AbstractTableModel {
         this.sortedSongs = sortedSongs;  
 //        fireTableDataChanged();
     }
+    
+    public void clearSongs() {
+        songs.clear();
+//        fireTableDataChanged();
+    }
 }

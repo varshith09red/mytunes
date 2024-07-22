@@ -28,13 +28,13 @@ public class NewJFrame extends javax.swing.JFrame {
         songNameLbl = new javax.swing.JLabel();
         songAuthorLbl = new javax.swing.JLabel();
         jTextField1 = new javax.swing.JTextField();
-        TreejScrollPane = new javax.swing.JScrollPane();
-        jTree1 = new javax.swing.JTree();
         progressBarjPanel = new javax.swing.JPanel();
         startTimerLbl = new javax.swing.JLabel();
         stopTimerLbl = new javax.swing.JLabel();
         progressBarjSlider = new javax.swing.JSlider();
         TablejScrollPane = new javax.swing.JScrollPane();
+        TreejPanel = new javax.swing.JPanel();
+        jSplitPane1 = new javax.swing.JSplitPane();
         jMenuBar1 = new javax.swing.JMenuBar();
         FileMenu = new javax.swing.JMenu();
         playASongMenuItem = new javax.swing.JMenuItem();
@@ -197,8 +197,6 @@ public class NewJFrame extends javax.swing.JFrame {
 
         jTextField1.setText("jTextField1");
 
-        TreejScrollPane.setViewportView(jTree1);
-
         progressBarjPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
         progressBarjPanel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
@@ -219,6 +217,23 @@ public class NewJFrame extends javax.swing.JFrame {
         progressBarjPanel.add(progressBarjSlider, new org.netbeans.lib.awtextra.AbsoluteConstraints(243, 5, 417, 11));
 
         TablejScrollPane.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
+
+        TreejPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
+
+        jSplitPane1.setDividerSize(0);
+        jSplitPane1.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        jSplitPane1.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+
+        javax.swing.GroupLayout TreejPanelLayout = new javax.swing.GroupLayout(TreejPanel);
+        TreejPanel.setLayout(TreejPanelLayout);
+        TreejPanelLayout.setHorizontalGroup(
+            TreejPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 154, Short.MAX_VALUE)
+        );
+        TreejPanelLayout.setVerticalGroup(
+            TreejPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 265, Short.MAX_VALUE)
+        );
 
         FileMenu.setText("File");
 
@@ -265,7 +280,7 @@ public class NewJFrame extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(ActionButtonsjPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(TreejScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 149, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(TreejPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(TablejScrollPane))
                     .addComponent(progressBarjPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -276,8 +291,8 @@ public class NewJFrame extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(TreejScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 267, Short.MAX_VALUE)
-                    .addComponent(TablejScrollPane))
+                    .addComponent(TablejScrollPane)
+                    .addComponent(TreejPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(progressBarjPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -382,16 +397,16 @@ public class NewJFrame extends javax.swing.JFrame {
     private javax.swing.JMenu FileMenu;
     private javax.swing.JPanel SongNamejPanel;
     private javax.swing.JScrollPane TablejScrollPane;
-    private javax.swing.JScrollPane TreejScrollPane;
+    private javax.swing.JPanel TreejPanel;
     private javax.swing.JMenuItem addSongMenuItem;
     private javax.swing.JMenuItem deleteSongMenuItem;
     private javax.swing.JMenuItem exitMenuItem;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JPopupMenu jPopupMenu1;
     private javax.swing.JPopupMenu jPopupMenu2;
+    private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JTextField jTextField1;
     private javax.swing.JTextField jTextField2;
-    private javax.swing.JTree jTree1;
     private java.awt.Menu menu1;
     private java.awt.Menu menu2;
     private java.awt.MenuBar menuBar1;

@@ -1,10 +1,9 @@
 package mytunes;
 
 import java.awt.Font;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.dnd.DnDConstants;
-import java.awt.dnd.DropTarget;
-import java.awt.dnd.DropTargetDropEvent;
+import java.awt.datatransfer.*;
+import java.awt.dnd.*;
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -17,7 +16,9 @@ import java.util.Hashtable;
 import java.util.List;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -25,6 +26,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
+import javax.swing.TransferHandler;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
@@ -32,6 +35,8 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableRowSorter;
 import javax.swing.event.RowSorterEvent;
 import javax.swing.event.RowSorterListener;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 
 public class GUI1 extends javax.swing.JFrame {
     
@@ -46,14 +51,23 @@ public class GUI1 extends javax.swing.JFrame {
     private javax.swing.JPanel SongNamejPanel;
     private javax.swing.JLabel songAuthorLbl;
     private javax.swing.JLabel songNameLbl;
-    
-    private javax.swing.JLabel jLabel3;
+
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JPopupMenu popupMenu;
     private javax.swing.JPopupMenu columnPopupMenu;
     
     private javax.swing.JScrollPane TreejScrollPane;
-    private javax.swing.JTree jTree1;
+    private javax.swing.JTree rootTree;
+//    private javax.swing.JTree libraryTree;
+//    private javax.swing.JTree playlistTree;
+    private javax.swing.tree.DefaultMutableTreeNode rootNode;
+    private javax.swing.tree.DefaultMutableTreeNode libraryNode;
+    private javax.swing.tree.DefaultMutableTreeNode playlistNode;
+    private javax.swing.tree.DefaultTreeModel rootTreeModel;
+//    private javax.swing.tree.DefaultTreeModel playlistTreeModel;
+    private List<Playlist> playlists;
+    public final PlaylistController playlistController;
+    public Playlist playlistSelectedNode; //to store which playlist id selected
     
     private javax.swing.JScrollPane TablejScrollPane;
     private TableRowSorter<SongTableModel> sorter;
@@ -70,7 +84,10 @@ public class GUI1 extends javax.swing.JFrame {
     private javax.swing.JMenuItem playASongMenuItem;
     private javax.swing.JMenuItem addSongMenuItem;
     private javax.swing.JMenuItem deleteSongMenuItem;
+    private javax.swing.JMenuItem createNewPlaylistMenuItem;
+    private javax.swing.JMenuItem addSongToPlaylistMenuItem;
     private javax.swing.JMenuItem exitMenuItem;
+    private javax.swing.JMenuItem refresh;
     
     private Song currentSong;
     private javax.swing.JSlider progressBarjSlider;
@@ -88,6 +105,8 @@ public class GUI1 extends javax.swing.JFrame {
             refreshSongTable();
         });
         player = new CustomPlayer(this, songTableModel, songs);
+        playlistController = new PlaylistController(database);
+        playlists = playlistController.getAllPlaylists();
         initComponents();
     }
                      
@@ -108,10 +127,69 @@ public class GUI1 extends javax.swing.JFrame {
         songNameLbl = new javax.swing.JLabel();
         songAuthorLbl = new javax.swing.JLabel();
         
-        jLabel3 = new javax.swing.JLabel();
         TreejScrollPane = new javax.swing.JScrollPane();
-        jTree1 = new javax.swing.JTree();
+        // Create the "Root" tree and make it invisible
+        rootNode = new javax.swing.tree.DefaultMutableTreeNode("Root");
+        rootTreeModel = new javax.swing.tree.DefaultTreeModel(rootNode);
+        rootTree = new javax.swing.JTree(rootTreeModel);
+        rootTree.setRootVisible(true);
+        rootTree.setShowsRootHandles(true);
+        rootTree.setEditable(true);
+
+        // Create the "Library" node
+        libraryNode = new javax.swing.tree.DefaultMutableTreeNode("Library"){
+            @Override
+            public boolean isLeaf() {
+                return true; // Prevent adding children to "Library" node
+            }
+            
+        };
         
+
+        // Create the "Playlist" node with user created playlists from Database
+        playlistNode = new javax.swing.tree.DefaultMutableTreeNode("Playlists");
+        for(Playlist p : playlists){
+            System.out.println(p.getName() + " : "+(p.getSongs()));
+            javax.swing.tree.DefaultMutableTreeNode playList = new javax.swing.tree.DefaultMutableTreeNode(p.getName());
+            playlistNode.add(playList);
+        }
+        
+        // Add "Library" and "Playlists" as children of "Root"
+        rootNode.add(libraryNode);
+        rootNode.add(playlistNode);
+        // Expand all nodes
+        expandAllNodes(rootTree, 0, rootTree.getRowCount());
+
+        // Set root node visibility to false
+        rootTree.setRootVisible(false);
+        
+        // Add TreeSelectionListener
+        rootTree.addTreeSelectionListener(new javax.swing.event.TreeSelectionListener() {
+            public void valueChanged(javax.swing.event.TreeSelectionEvent evt) {
+                treeSelectionChanged(evt);
+            }
+        });
+        
+        // Add mouse listener to the playlist node
+        rootTree.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e) && rootTree.getSelectionPath() != null) {
+                    TreePath path = rootTree.getPathForLocation(e.getX(), e.getY());
+                    rootTree.setSelectionPath(path);
+                    if (path != null && path.getLastPathComponent() instanceof DefaultMutableTreeNode) {
+                        DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
+                        if (node.getParent() == playlistNode) {
+                            showPlaylistPopup(e, node);
+                        }
+                        if (node == playlistNode) {
+                            showAddPlaylistPopup(e);
+                        }
+                    }
+                }
+            }
+        });
+
         progressBarjPanel = new javax.swing.JPanel();
         startTimerLbl = new javax.swing.JLabel();
         stopTimerLbl = new javax.swing.JLabel();
@@ -122,7 +200,9 @@ public class GUI1 extends javax.swing.JFrame {
         playASongMenuItem = new javax.swing.JMenuItem();
         addSongMenuItem = new javax.swing.JMenuItem();
         deleteSongMenuItem = new javax.swing.JMenuItem();
+        createNewPlaylistMenuItem = new javax.swing.JMenuItem();
         exitMenuItem = new javax.swing.JMenuItem();
+        refresh = new javax.swing.JMenuItem();
       
         setTitle("MyTunes");
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -240,7 +320,7 @@ public class GUI1 extends javax.swing.JFrame {
                 .addGap(11, 11, 11))
         );
 
-        TreejScrollPane.setViewportView(jTree1);
+        TreejScrollPane.setViewportView(rootTree);
 
         progressBarjPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
         progressBarjPanel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -293,14 +373,20 @@ public class GUI1 extends javax.swing.JFrame {
                         int modelIndex = sorter.convertRowIndexToModel(i);
                         sortedSongs.add(songTableModel.getSongAt(modelIndex));
                     }
-                    
-                    songTableModel.setSortedSongs(sortedSongs);
-                    player.setSortedSongList(sortedSongs);
+                    if(sortedSongs.size() != 0){
+                        songTableModel.setSortedSongs(sortedSongs);
+                        player.setSortedSongList(sortedSongs);
+                    }
                 }
             }
         });
         
         sorter.toggleSortOrder(0);  // Default sorting on "Title" column
+        
+        // Enable drag support
+        songTable.setDragEnabled(true);
+        songTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        songTable.setTransferHandler(new SongTransferHandler());
         
         TablejScrollPane = new JScrollPane(songTable);
         songTable.setFillsViewportHeight(true);
@@ -317,6 +403,12 @@ public class GUI1 extends javax.swing.JFrame {
             deleteSongMenuItemActionPerformed(e);
         });
         popupMenu.add(deleteMenuItem);
+        popupMenu.addSeparator();
+        
+        addSongToPlaylistMenuItem = new JMenu("Add Song To Playlist");
+
+        updateAddSongToPlaylistSubMenu();
+        popupMenu.add(addSongToPlaylistMenuItem);
 
         // Add mouse listener to show popup menu
         songTable.addMouseListener(new MouseAdapter() {
@@ -420,12 +512,27 @@ public class GUI1 extends javax.swing.JFrame {
             deleteSongMenuItemActionPerformed(evt);
         });
         FileMenu.add(deleteSongMenuItem);
-
+        
+        FileMenu.addSeparator();
+        createNewPlaylistMenuItem.setText("Create New Playlist");
+        createNewPlaylistMenuItem.addActionListener((java.awt.event.ActionEvent evt) -> {
+            addPlaylist();
+        });
+        FileMenu.add(createNewPlaylistMenuItem);
+        FileMenu.addSeparator();
+        
         exitMenuItem.setText("Exit");
         exitMenuItem.addActionListener((java.awt.event.ActionEvent evt) -> {
             exitMenuItemActionPerformed(evt);
         });
-        FileMenu.add(exitMenuItem);
+        FileMenu.add(exitMenuItem); 
+        FileMenu.addSeparator();
+        
+        refresh.setText("Refresh");
+        refresh.addActionListener((java.awt.event.ActionEvent evt) -> {
+            refreshMenuItemActionPerformed(evt);
+        });
+        FileMenu.add(refresh);
 
         jMenuBar1.add(FileMenu);
 
@@ -491,6 +598,11 @@ public class GUI1 extends javax.swing.JFrame {
         System.exit(0);
     }
     
+    private void refreshMenuItemActionPerformed(java.awt.event.ActionEvent evt) {
+        this.revalidate();
+        this.repaint();
+    }
+    
     private void addSongMenuItemActionPerformed(java.awt.event.ActionEvent evt) {                                                
         player.addSong(songTableModel,database);
         refreshSongTable();
@@ -498,6 +610,16 @@ public class GUI1 extends javax.swing.JFrame {
     
     private void deleteSongMenuItemActionPerformed(java.awt.event.ActionEvent evt) {                                                
         player.deleteSong(songTable,songTableModel,database);
+        refreshSongTable();
+    }
+    
+    private void addSongToPlaylistMenuItemActionPerformed(Playlist playlist) {                                                
+        int selectedRow = songTable.getSelectedRow();
+        if (selectedRow != -1) {
+            int songIndex = songTable.convertRowIndexToModel(selectedRow);
+            Song selectedSong = songTableModel.getSongAt(songIndex);
+            playlistController.addSongToPlaylist(selectedSong, playlist);
+        }
         refreshSongTable();
     }
 
@@ -540,8 +662,14 @@ public class GUI1 extends javax.swing.JFrame {
     }                                                                          
     
     private void refreshSongTable() {
-        songTableModel.setSongs(database.getAllSongs());
-        songTableModel.fireTableDataChanged();
+        if(playlistSelectedNode != null){
+            songTableModel.setSongs(playlistSelectedNode.getSongs());
+//            songTableModel.fireTableDataChanged();
+        } else{ //if library is selected, we need to get all the songs
+            songTableModel.setSongs(database.getAllSongs());
+//            songTableModel.fireTableDataChanged();
+        }
+            
     }
     
     public void setPlaybackSliderValue(int frame, int currentTimeInMilli) {
@@ -588,35 +716,226 @@ public class GUI1 extends javax.swing.JFrame {
         // create the song length label
         Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
 
-        // beginning will be 00:00
         startTimerLbl.setText("0:00:00");
-//        JLabel labelBeginning = new JLabel("00:00");
-//        labelBeginning.setFont(new Font("Dialog", Font.BOLD, 18));
-//        labelBeginning.setForeground(TEXT_COLOR);
 
-        // end will vary depending on the song
         stopTimerLbl.setText(song.getSongLength());
-//        JLabel labelEnd =  new JLabel(song.getSongLength());
-//        labelEnd.setFont(new Font("Dialog", Font.BOLD, 18));
-//        labelEnd.setForeground(TEXT_COLOR);
 
         labelTable.put(0, startTimerLbl);
         labelTable.put(song.getMp3File().getFrameCount(), stopTimerLbl);
 
-//        progressBarjSlider.setLabelTable(labelTable);
-//        progressBarjSlider.setPaintLabels(true);
+    }
+    
+    private void expandAllNodes(javax.swing.JTree tree, int startingIndex, int rowCount) {
+        for (int i = startingIndex; i < rowCount; ++i) {
+            tree.expandRow(i);
+        }
+
+        if (tree.getRowCount() != rowCount) {
+            expandAllNodes(tree, rowCount, tree.getRowCount());
+        }
+    }
+    
+    private void updateAddSongToPlaylistSubMenu() {
+        addSongToPlaylistMenuItem.removeAll();
+        for (Playlist playlist : playlists) {
+            JMenuItem playlistItem = new JMenuItem(playlist.getName());
+            playlistItem.addActionListener(e -> addSongToPlaylistMenuItemActionPerformed(playlist));
+            addSongToPlaylistMenuItem.add(playlistItem);
+        }
     }
 
-    
-//    public List<Song> getSortedSongs() {
-//        int rowCount = sorter.getViewRowCount();
-//        List<Song> sortedSongs = new ArrayList<>();
-//        for (int i = 0; i < rowCount; i++) {
-//            int modelRow = sorter.convertRowIndexToModel(i);
-//            sortedSongs.add(songTableModel.getSongAt(modelRow));
-//            System.out.println("sortedSongs:" + sortedSongs);
+    // Method to handle tree selection changes
+    private void treeSelectionChanged(javax.swing.event.TreeSelectionEvent evt) {
+        DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) rootTree.getLastSelectedPathComponent();
+        if (selectedNode == null) {
+            playlistSelectedNode = null;
+            return;
+        }
+
+        String nodeName = selectedNode.getUserObject().toString();
+
+        if (nodeName.equals("Library")) {
+            playlistSelectedNode = null;
+            // Fetch all songs from the db and display in the library
+            System.out.println("library selected: "+ songTableModel.getSortedSongs());
+//            updateSongTable(songTableModel.getSortedSongs());
+            refreshSongTable();
+        } else if (selectedNode.getParent() == playlistNode) {
+            // Fetch songs from the selected playlist and display in the JTable
+            Playlist selectedPlaylist = getPlaylistByName(nodeName); // You need to implement this method
+            if (selectedPlaylist != null) {
+                updateSongTable(selectedPlaylist.getSongs());
+                playlistSelectedNode = selectedPlaylist;
+            }
+        }
+    }
+
+    // Method to update the JTable with songs
+    private void updateSongTable(List<Song> songs) {
+        songTableModel.clearSongs(); // Clear the table
+//        for (Song song : songs) {
+//            songTableModel.addSong(song);
 //        }
-//        return sortedSongs;
-//    }
+        songTableModel.setSongs(songs);
+        songTableModel.fireTableDataChanged();
+    }
+
+    // Placeholder method to get a playlist by name, you need to implement this
+    private Playlist getPlaylistByName(String name) {
+        // Iterate through your playlists and return the matching one
+        for (Playlist playlist : playlists) {
+            if (playlist.getName().equals(name)) {
+                return playlist;
+            }
+        }
+        return null;
+    }
     
+    private void showPlaylistPopup(MouseEvent e, DefaultMutableTreeNode node) {
+        JPopupMenu menu = new JPopupMenu();
+        JMenuItem deletePlaylist = new JMenuItem("Delete Playlist");
+        deletePlaylist.addActionListener(evt -> deletePlaylist(node));
+        menu.add(deletePlaylist);
+        JMenuItem openInNewWindow = new JMenuItem("Open in New Window");
+        openInNewWindow.addActionListener(evt -> openPlaylistInNewWindow(node));
+        menu.add(openInNewWindow);
+        menu.show(rootTree, e.getX(), e.getY());
+    }
+    
+    private void showAddPlaylistPopup(MouseEvent e) {
+        JPopupMenu menu = new JPopupMenu();
+        JMenuItem addPlaylist = new JMenuItem("Add Playlist");
+        addPlaylist.addActionListener(evt -> addPlaylist());
+        menu.add(addPlaylist);
+        menu.show(rootTree, e.getX(), e.getY());
+    }
+
+    private void addPlaylist() {
+        String name = JOptionPane.showInputDialog(this, "Enter Playlist Name:");
+        if (name != null && !name.trim().isEmpty()) {
+            playlistController.createPlaylist(name);
+            Playlist newPlaylist = new Playlist(0, name); // ID will be managed by the database
+            playlists.add(newPlaylist);
+            DefaultMutableTreeNode newNode = new DefaultMutableTreeNode(newPlaylist.getName());
+            playlistNode.add(newNode);
+            rootTreeModel.reload(playlistNode);
+            expandAllNodes(rootTree, 0, rootTree.getRowCount());
+            
+            //select the new node
+            TreePath path = new TreePath(newNode.getPath());
+            rootTree.setSelectionPath(path);
+            rootTree.scrollPathToVisible(path);
+        }
+        updateAddSongToPlaylistSubMenu();
+    }
+    
+    private void deletePlaylist(DefaultMutableTreeNode node) {
+        int confirm = JOptionPane.showConfirmDialog(this, "Deleting the playlist will remove all songs in the playlist. Are you sure?", "Warning", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            String playlistName = node.getUserObject().toString();
+            Playlist playlistToDelete = playlists.stream().filter(p -> p.getName().equals(playlistName)).findFirst().orElse(null);
+            if (playlistToDelete != null) {
+                playlistController.deletePlaylist(playlistToDelete);
+                playlists.remove(playlistToDelete);
+                playlistNode.remove(node);
+                rootTreeModel.reload(playlistNode);
+            }
+        }
+        updateAddSongToPlaylistSubMenu();
+    }
+
+    private void openPlaylistInNewWindow(DefaultMutableTreeNode node) {
+        System.out.println("new window click triggered");
+//        if (node.getUserObject() instanceof Playlist) {
+//            System.out.println("new windoe click triggered: inside if");
+            String PlaylistName = node.getUserObject().toString();
+            Playlist p = getPlaylistByName(PlaylistName);
+            GUI1 playlistWindow = new GUI1();
+            playlistWindow.playlistSelectedNode = playlistSelectedNode;
+            playlistSelectedNode = null;
+            playlistWindow.setTitle(PlaylistName +" Playlist Songs");
+            playlistWindow.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+            // Disable treejScrollPane in the new window
+            playlistWindow.TreejScrollPane.getHorizontalScrollBar().setEnabled(false);
+            playlistWindow.TreejScrollPane.getVerticalScrollBar().setEnabled(false);
+            playlistWindow.TreejScrollPane.getViewport().getView().setEnabled(false);
+            
+            if (p != null) {
+                playlistWindow.updateSongTable(p.getSongs());
+            }
+            
+            // Move the selected playlist to the new window
+            playlistWindow.setVisible(true);
+            
+            // Drag and Drop
+            playlistWindow.songTable.setDropTarget(new DropTarget() {
+            @Override
+            public synchronized void drop(DropTargetDropEvent dtde) {
+                try {
+                    if (dtde.isDataFlavorSupported(new DataFlavor(Song.class, "Songs"))) {
+                        dtde.acceptDrop(DnDConstants.ACTION_MOVE);
+                        Transferable transferable = dtde.getTransferable();
+                        List<Song> droppedSongs = (List<Song>) transferable.getTransferData(new DataFlavor(Song.class, "Songs"));
+                        for(Song song: droppedSongs){
+                            playlistWindow.playlistController.addSongToPlaylist(song, playlistWindow.playlistSelectedNode);
+                        }
+                        dtde.dropComplete(true);
+                    } else {
+                        dtde.rejectDrop();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    dtde.rejectDrop();
+                }
+                }
+            });
+            
+        refreshSongTable();
+    }
+    
+    private class SongTransferHandler extends TransferHandler {
+        @Override
+        protected Transferable createTransferable(JComponent c) {
+            int[] selectedRows = songTable.getSelectedRows();
+            List<Song> selectedSongs = new ArrayList<>();
+            for (int row : selectedRows) {
+                selectedSongs.add(songTableModel.getSongAt(songTable.convertRowIndexToModel(row)));
+            }
+            return new SongsTransferable(selectedSongs);
+        }
+
+        @Override
+        public int getSourceActions(JComponent c) {
+            return MOVE;
+        }
+    }
+
+    private class SongsTransferable implements Transferable {
+        private final List<Song> songs;
+        private final DataFlavor songFlavor = new DataFlavor(Song.class, "Songs");
+
+        public SongsTransferable(List<Song> songs) {
+            this.songs = songs;
+        }
+
+        @Override
+        public DataFlavor[] getTransferDataFlavors() {
+            return new DataFlavor[]{songFlavor};
+        }
+
+        @Override
+        public boolean isDataFlavorSupported(DataFlavor flavor) {
+            return flavor.equals(songFlavor);
+        }
+
+        @Override
+        public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
+            if (!isDataFlavorSupported(flavor)) {
+                throw new UnsupportedFlavorException(flavor);
+            }
+            return songs;
+        }
+    }
 }
+
+

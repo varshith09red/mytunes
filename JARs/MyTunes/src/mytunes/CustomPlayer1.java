@@ -42,9 +42,10 @@ public class CustomPlayer1 {
     
     private boolean isPaused;
     private int currentFrame;
+    private GUI1 gui;
 
 
-    public CustomPlayer1(SongTableModel songTableModel, List<Song> songs) {
+    public CustomPlayer1(GUI1 gui,SongTableModel songTableModel, List<Song> songs) {
         this.player = null;
         this.FIS = null;
         this.valid = false;
@@ -58,6 +59,7 @@ public class CustomPlayer1 {
         this.audioClip = null;
         this.elapsedTime = 0;
         this.songTableModel = songTableModel;
+        this.gui = gui;
     }
 
     public void setSortedSongList(List<Song> songs){
@@ -215,6 +217,9 @@ public class CustomPlayer1 {
             if (song != null) {
                 database.addSong(song);
                 songTableModel.addSong(song);
+                if(gui.playlistSelectedNode != null){
+                    gui.playlistController.addSongToPlaylist(song, gui.playlistSelectedNode);
+                }
             } else {
                 JOptionPane.showMessageDialog(null, "Failed to extract ID3 tags from the selected file.", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -228,6 +233,9 @@ public class CustomPlayer1 {
             System.out.println("songId: "+songId);
             database.deleteSong(songId);
             songTableModel.removeSong(selectedRow);
+            if(gui.playlistSelectedNode != null){
+                    gui.playlistController.deleteSongFromPlaylist(songTableModel.getSongAt(selectedRow), gui.playlistSelectedNode);
+                }
         }
     }
 
