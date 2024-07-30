@@ -8,33 +8,37 @@ Features:
 - table sort, and add/Delete columns persist over session
 - extract data from id3 tags
 - play from file menu bar (playing file into mytune)
-
-(need to)
-
 - playlists
 - drag and drop songs from library to playlist
 - delete playlists
-- session persistence with playlist
 - playlist open in new windows
-- keybord shortcuts
-- control menu with recently last ten played, songs
-- shuffle mode and diff other controls
+- shuffle, repeat
+- controls menu
+- recently played 10 songs
+
+(need to)
+
+
+- session persistence with playlist
+- keybord shortcuts - play with "SPACE" rest are done
 - if same mp3 file uploaded
 
 Bugs:
-1) if next song is playing, the current song index should hover on that song, and on play the first song should get played.
 
-2) when new song is added, the action buttons are not updated with the song list, when next is clicked newly added song is not played.
-current index is based on the first order read from MySQL.
+1)** when new song is added, the action buttons are not updated with the song list, when next is clicked newly added song is not played.
+current index is based on the first order read from MySQL. 
+(not that imp)
 
-<<<<<<< HEAD
-3) deleting next song in the list
+2) if a song is deleted from main library, it should be deleted from all playlists, happening so in DB but GUI need to update (done problem with "playlits" object in UI, was not updating the list)
 
-4)if first is deleted, next song is getting deleted
+3) same as above but with adding, add new song to playlist, it should be added to main library , not updating in GUI, but working fine in DB
 
-5) songs in playlist are getting empty after few selections
-=======
-3) Next, previous, the song list is updated only when a row is selected not everytime.
+4) space bar accessible key for play song
 
-4) 
->>>>>>> 20a435313ea6c8d2588a2a519ca9596ad959edfe
+5) need to integrate volume
+
+6) need to adjust progressive bar UI and timing
+
+7) drag and drop is adding 2 files to the table (done)
+
+

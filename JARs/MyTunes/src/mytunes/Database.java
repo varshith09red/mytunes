@@ -6,6 +6,7 @@ import java.util.List;
 
 public class Database {
     private Connection connection;
+    private List<GUI1> listeners = new ArrayList<>();
 
     public Database() {
         try {
@@ -15,6 +16,29 @@ public class Database {
             createTables();
         } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
+        }
+    }
+    
+    // Register a listener
+    public void addChangeListener(GUI1 windows) {
+        listeners.add(windows);
+    }
+    
+    // remove a listener
+    public void removeListener(GUI1 windows) {
+        listeners.remove(windows);
+    }
+    
+    // get listener
+    public List<GUI1> getListeners() {
+        return listeners;
+    }
+
+    // Notify all listeners
+    private void notifyListeners() {
+        for (GUI1 listener : listeners) {
+            System.out.println("listener Name: "+listener.getName());
+            listener.refreshSongTable();
         }
     }
 
@@ -81,6 +105,7 @@ public class Database {
             preparedStatement.setString(6, song.getComment());
             preparedStatement.setString(7, song.getFilePath());
             preparedStatement.executeUpdate();
+            notifyListeners(); // Notify listeners of change
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -137,6 +162,44 @@ public class Database {
         }
         return playlists;
     }
+    
+    public List<Song> getSongsByPlaylistName(String playlistName) {
+    List<Song> songs = new ArrayList<>();
+    try {
+        String getPlaylistIdQuery = "SELECT id FROM playlists WHERE name = ?";
+        PreparedStatement getPlaylistIdStmt = connection.prepareStatement(getPlaylistIdQuery);
+        getPlaylistIdStmt.setString(1, playlistName);
+        ResultSet resultSet = getPlaylistIdStmt.executeQuery();
+        if (resultSet.next()) {
+            int playlistId = resultSet.getInt("id");
+
+            String getSongsQuery = "SELECT s.id, s.title, s.artist, s.album, s.year, s.genre, s.comment, s.filePath " +
+                    "FROM songs s " +
+                    "JOIN playlist_songs ps ON s.id = ps.song_id " +
+                    "WHERE ps.playlist_id = ?";
+            PreparedStatement getSongsStmt = connection.prepareStatement(getSongsQuery);
+            getSongsStmt.setInt(1, playlistId);
+            ResultSet songsResultSet = getSongsStmt.executeQuery();
+            while (songsResultSet.next()) {
+                Song song = new Song(
+                        songsResultSet.getInt("id"),
+                        songsResultSet.getString("title"),
+                        songsResultSet.getString("artist"),
+                        songsResultSet.getString("album"),
+                        songsResultSet.getString("year"),
+                        songsResultSet.getString("genre"),
+                        songsResultSet.getString("comment"),
+                        songsResultSet.getString("filePath")
+                );
+                songs.add(song);
+            }
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return songs;
+}
+
     
     public void deletePlaylist(String playlistName) {
         try {
@@ -212,6 +275,7 @@ public class Database {
                 insertSongToPlaylistStmt.setInt(1, playlistId);
                 insertSongToPlaylistStmt.setInt(2, songId);
                 insertSongToPlaylistStmt.executeUpdate();
+                notifyListeners(); // Notify listeners of change
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -225,6 +289,7 @@ public class Database {
             PreparedStatement preparedStatement = connection.prepareStatement(deleteSong);
             preparedStatement.setInt(1, songId);
             preparedStatement.executeUpdate();
+            notifyListeners(); // Notify listeners of change
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -243,6 +308,7 @@ public class Database {
                 preparedStatement.setInt(1, playlistId);
                 preparedStatement.setInt(2, songId);
                 preparedStatement.executeUpdate();
+                notifyListeners(); // Notify listeners of change
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -256,6 +322,7 @@ public class Database {
             preparedStatement.setString(1, comment);
             preparedStatement.setInt(2, songId);
             preparedStatement.executeUpdate();
+            notifyListeners(); // Notify listeners of change
         } catch (SQLException e) {
             e.printStackTrace();
         }

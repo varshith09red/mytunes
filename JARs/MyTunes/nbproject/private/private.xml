@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-private xmlns="http://www.netbeans.org/ns/project-private/1">
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="14">
+        <file>
+            <url>src/mytunes/GUI1.java</url>
+            <bookmark id="14">
+                <name/>
+                <line>261</line>
+                <key/>
+            </bookmark>
+            <bookmark id="8">
+                <name/>
+                <line>370</line>
+                <key/>
+            </bookmark>
+            <bookmark id="5">
+                <name/>
+                <line>451</line>
+                <key/>
+            </bookmark>
+            <bookmark id="13">
+                <name/>
+                <line>709</line>
+                <key/>
+            </bookmark>
+            <bookmark id="7">
+                <name/>
+                <line>723</line>
+                <key/>
+            </bookmark>
+            <bookmark id="2">
+                <name/>
+                <line>850</line>
+                <key/>
+            </bookmark>
+        </file>
+        <file>
+            <url>src/mytunes/CustomPlayer.java</url>
+            <bookmark id="12">
+                <name/>
+                <line>102</line>
+                <key/>
+            </bookmark>
+            <bookmark id="11">
+                <name/>
+                <line>364</line>
+                <key/>
+            </bookmark>
+            <bookmark id="9">
+                <name/>
+                <line>364</line>
+                <key/>
+            </bookmark>
+        </file>
+    </editor-bookmarks>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/C:/Users/030834321/Documents/NetBeansProjects/MyTunes/src/mytunes/CustomPlayer.java</file>
+            <file>file:/C:/Users/030834321/Documents/NetBeansProjects/MyTunes/src/mytunes/Song.java</file>
+            <file>file:/C:/Users/030834321/Documents/NetBeansProjects/MyTunes/src/mytunes/GUI1.java</file>
+            <file>file:/C:/Users/030834321/Documents/NetBeansProjects/MyTunes/src/mytunes/Database.java</file>
+            <file>file:/C:/Users/030834321/Documents/NetBeansProjects/MyTunes/src/mytunes/PlaylistController.java</file>
+            <file>file:/C:/Users/030834321/Documents/NetBeansProjects/MyTunes/src/mytunes/NewJFrame.java</file>
+            <file>file:/C:/Users/030834321/Documents/NetBeansProjects/MyTunes/src/mytunes/SongTableModel.java</file>
+            <file>file:/C:/Users/030834321/Documents/NetBeansProjects/MyTunes/src/mytunes/Playlist.java</file>
+        </group>
+    </open-files>
+</project-private>

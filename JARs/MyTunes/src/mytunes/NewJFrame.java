@@ -198,23 +198,40 @@ public class NewJFrame extends javax.swing.JFrame {
         jTextField1.setText("jTextField1");
 
         progressBarjPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
-        progressBarjPanel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         startTimerLbl.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         startTimerLbl.setText("0:00:00");
         startTimerLbl.setMaximumSize(new java.awt.Dimension(100, 80));
-        progressBarjPanel.add(startTimerLbl, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 1, 80, -1));
 
         stopTimerLbl.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         stopTimerLbl.setText("0:00:00");
         stopTimerLbl.setMaximumSize(new java.awt.Dimension(100, 80));
-        progressBarjPanel.add(stopTimerLbl, new org.netbeans.lib.awtextra.AbsoluteConstraints(689, 1, 86, -1));
 
         progressBarjSlider.setValue(0);
         progressBarjSlider.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         progressBarjSlider.setDebugGraphicsOptions(javax.swing.DebugGraphics.NONE_OPTION);
         progressBarjSlider.setPreferredSize(new java.awt.Dimension(300, 50));
-        progressBarjPanel.add(progressBarjSlider, new org.netbeans.lib.awtextra.AbsoluteConstraints(243, 5, 417, 11));
+
+        javax.swing.GroupLayout progressBarjPanelLayout = new javax.swing.GroupLayout(progressBarjPanel);
+        progressBarjPanel.setLayout(progressBarjPanelLayout);
+        progressBarjPanelLayout.setHorizontalGroup(
+            progressBarjPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(progressBarjPanelLayout.createSequentialGroup()
+                .addGap(129, 129, 129)
+                .addComponent(startTimerLbl, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(33, 33, 33)
+                .addComponent(progressBarjSlider, javax.swing.GroupLayout.PREFERRED_SIZE, 417, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(29, 29, 29)
+                .addComponent(stopTimerLbl, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE))
+        );
+        progressBarjPanelLayout.setVerticalGroup(
+            progressBarjPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(startTimerLbl, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(progressBarjPanelLayout.createSequentialGroup()
+                .addGap(4, 4, 4)
+                .addComponent(progressBarjSlider, javax.swing.GroupLayout.PREFERRED_SIZE, 11, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addComponent(stopTimerLbl, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+        );
 
         TablejScrollPane.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
 
@@ -232,7 +249,7 @@ public class NewJFrame extends javax.swing.JFrame {
         );
         TreejPanelLayout.setVerticalGroup(
             TreejPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 265, Short.MAX_VALUE)
+            .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 264, Short.MAX_VALUE)
         );
 
         FileMenu.setText("File");

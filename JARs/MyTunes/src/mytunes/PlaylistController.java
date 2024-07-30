@@ -36,7 +36,6 @@ public class PlaylistController {
     }
     
     public List<Song> getAllPlaylistSongs(Playlist playlist){
-        List<Song> songs = playlist.getSongs();
-        return songs;
+        return database.getSongsByPlaylistName(playlist.getName());
     }
 }

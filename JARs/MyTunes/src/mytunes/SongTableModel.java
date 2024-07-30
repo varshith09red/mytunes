@@ -176,6 +176,11 @@ public class SongTableModel extends AbstractTableModel {
         }
     }
     
+    //for go to current song in table
+    public int getIndexOfSong(Song song) {
+        return songs.indexOf(song);
+    }
+    
     //for generating sorted songs list
     public Song getSongAt(int rowIndex) {
         return songs.get(rowIndex);

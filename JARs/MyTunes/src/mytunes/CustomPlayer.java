@@ -26,17 +26,24 @@ import javax.sound.sampled.Clip;
 
 import com.mpatric.mp3agic.Mp3File;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.Properties;
 public class CustomPlayer extends PlaybackListener {
 
     private AdvancedPlayer player;
     private String path;
-//    private int total;
-//    private int stopped;
-//    private boolean valid;
     private int currentSongIndex;
     
     private List<Song> songs;
@@ -45,23 +52,40 @@ public class CustomPlayer extends PlaybackListener {
     private static final Object playSignal = new Object();
     private boolean isPaused;
     private int currentFrame;
-//    private Mp3File mp3File;
-//    private double frameRatePerMilliseconds;
     
     private FloatControl volumeControl;
     private Song currentSong;
     private boolean songFinished;
     private boolean pressedNext, pressedPrev;
-    private boolean shuffle, repeat; 
+    private List<Song> recentSongs;
     
-    private ArrayList<Song> playlist;
-    private List<Integer> songIds;
+//    private ArrayList<Song> playlist;
+//    private List<Integer> songIds;
+    
     // we will need to keep track the index we are in the playlist
 //    private int currentPlaylistIndex;
+    
     // track how many milliseconds has passed since playing the song (used for updating the slider)
     private int currentTimeInMilli;
+    private GUI1 gui;
     
-    
+     private Timer longPressTimer;
+
+    public CustomPlayer(GUI1 gui, SongTableModel songTableModel, List<Song> songs) {
+        this.path = null;
+        this.isPaused = false;
+        this.currentSongIndex = -1;
+        this.currentSong = null;
+        this.songs = songs;
+        this.songTableModel = songTableModel;
+        this.gui = gui;
+        this.pressedNext = false;
+        this.pressedPrev = false;
+        this.recentSongs = new LinkedList<>();
+        loadRecentSongs();
+//        initializeVolumeControl();
+    }
+
     public void setCurrentTimeInMilli(int timeInMilli){
         currentTimeInMilli = timeInMilli;
     }
@@ -77,32 +101,18 @@ public class CustomPlayer extends PlaybackListener {
     public void setCurrentFrame(int frame){
         currentFrame = frame;
     }
-    private GUI1 gui;
-
-    public CustomPlayer(GUI1 gui, SongTableModel songTableModel, List<Song> songs) {
-        this.path = null;
-//        this.total = 0;
-//        this.stopped = 0;
-        this.isPaused = false;
-        this.currentSongIndex = 0;
-        this.currentSong = null;
-        this.songs = songs;
-        this.songTableModel = songTableModel;
-        this.gui = gui;
-        this.pressedNext = false;
-        this.pressedPrev = false;
-//        this.shuffle
-//        this.repeat =
-//        initializeVolumeControl();
-    }
-
+    
     public void setSortedSongList(List<Song> songs){
-        this.songs = songs;
-        for(int i=0;i<songs.size();i++)
-        {System.out.println("Song Sorted: " + songs.get(i).getTitle()+" : "+songs.get(i).getId());}
+        
+        // Shuffle songs if shuffle is enabled
+        List<Song> songsToLoad = gui.shuffleEnabled ? shuffleSongs(this.songs) : songs;
+        this.songs = songsToLoad;
+        for(int i=0;i<this.songs.size();i++)
+        {System.out.println("Song Sorted: " + this.songs.get(i).getTitle()+" : "+this.songs.get(i).getId());}
         System.out.println("-----------------------") ;
-        loadPlaylist(songs);
-        currentSong = songs.get(0);
+        
+        // Set the current song
+//        currentSong = songsToLoad.get(0);
         
 //        //only for testing
 //        List<Song> ss = songTableModel.getSortedSongs();
@@ -111,89 +121,13 @@ public class CustomPlayer extends PlaybackListener {
 //        System.out.println("-----------------------") ;
     }
     
-//    public void loadSong(Song song){
-//        currentSong = song;
-//        System.out.println("Load Current Song: "+currentSong.getTitle());
-//        playlist = null;
-//
-//        // stop the song if possible
-//        if(!songFinished)
-//            stop();
-//
-//        // play the current song if not null
-//        if(currentSong != null){
-//            // reset frame
-//            currentFrame = 0;
-//
-//            // reset current time in milli
-//            currentTimeInMilli = 0;
-//            try{
-//                // update gui
-//            gui.setPlaybackSliderValue(currentFrame, currentTimeInMilli);
-//            
-//            } catch(Exception e){
-//                e.printStackTrace();
-//            }
-//            
-//
-////            play();
-//        }
-//    }
-//    
-    public void loadPlaylist(List<Song> songs){
-        playlist = new ArrayList<>(songs);
-        
-        songIds = new ArrayList<>();
-
-        // Extract IDs and store them in the songIds list
-        for (Song song : songs) {
-            songIds.add(song.getId());
-        }
-        System.out.println("Ids: "+ songIds);
-        // store the paths from the text file into the playlist array list
-//        try{
-//            FileReader fileReader = new FileReader(playlistFile);
-//            BufferedReader bufferedReader = new BufferedReader(fileReader);
-//
-//            // reach each line from the text file and store the text into the songPath variable
-//            String songPath;
-//            while((songPath = bufferedReader.readLine()) != null){
-//                // create song object based on song path
-//                Song song = new Song(songPath);
-//
-//                // add to playlist array list
-//                playlist.add(song);
-//            }
-//        }catch(Exception e){
-//            e.printStackTrace();
-//        }
-
-//        if(playlist.size() > 0){
-//            // reset playback slider
-//            musicPlayerGUI.setPlaybackSliderValue(0);
-//            currentTimeInMilli = 0;
-//
-//            // update current song to the first song in the playlist
-//            currentSong = playlist.get(0);
-//
-//            // start from the beginning frame
-//            currentFrame = 0;
-//
-//            // update gui
-//            musicPlayerGUI.enablePauseButtonDisablePlayButton();
-//            musicPlayerGUI.updateSongTitleAndArtist(currentSong);
-//            musicPlayerGUI.updatePlaybackSlider(currentSong);
-//
-//            // start song
-//            playCurrentSong();
-//        }
+    private List<Song> shuffleSongs(List<Song> songs) {
+        System.out.println("Shuffle Songs Called");
+        List<Song> shuffledSongs = new ArrayList<>(songs);
+        Collections.shuffle(shuffledSongs);
+        return shuffledSongs;
     }
-
-
-//    public void setPath(String path) {
-//        this.path = path;
-//    }
-
+    
     public void pause() {
         try {
             if(player != null){
@@ -214,11 +148,14 @@ public class CustomPlayer extends PlaybackListener {
         stop();
         try{
             // read mp3 audio data
+            if(currentSong == null)
+                currentSong = songs.get(0);
             FileInputStream fileInputStream = new FileInputStream(currentSong.getFilePath());
             BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
             
             gui.updateSongTitleAndArtist(currentSong);
             gui.updatePlaybackSlider(currentSong);
+            addRecentSong(currentSong);
             // create a new advanced player
             player = new AdvancedPlayer(bufferedInputStream);
             player.setPlayBackListener(this);
@@ -281,18 +218,21 @@ public class CustomPlayer extends PlaybackListener {
 
     public void next() {
         try {
+            
             int index = getSortedSongPosition(currentSongIndex);
             if (++index <= (songs.size())) {
                pressedNext = true;
-//               int nextSongId = songIds.get(++index);
-               Song nextSong = songTableModel.getSortedSongAt(index);
+               Song nextSong = null;
+               if(gui.shuffleEnabled && !gui.repeatEnabled)
+                    nextSong = this.songs.get(index);
+               if(gui.repeatEnabled)
+                   nextSong = this.songs.get(--index);
+               else if(!gui.shuffleEnabled && !gui.repeatEnabled)
+                    nextSong = songTableModel.getSortedSongAt(index);
                currentSong = nextSong; //pointing to next song
-//                Song s = songs.get(index);
-//                System.out.println("NextSorted: "+ s.getTitle());
+
                 System.out.println("Next: "+ nextSong.getTitle()+" : index: "+index);
-//                stop();
-                
-//                path = getCurrentSongFilePath();
+
                 play();
             }
         } catch (Exception e) {
@@ -306,15 +246,17 @@ public class CustomPlayer extends PlaybackListener {
             int index = getSortedSongPosition(currentSongIndex);
             if (index >= 0) {
                pressedNext = true;
-//               int prevSongId = songIds.get(--index);
-               Song prevSong = songTableModel.getSortedSongAt(--index);
+               Song prevSong = null;
+               if(gui.shuffleEnabled && !gui.repeatEnabled)
+                    prevSong = this.songs.get(--index);
+               if(gui.repeatEnabled)
+                   prevSong = this.songs.get(index);
+               else if(!gui.shuffleEnabled && !gui.repeatEnabled)
+                    prevSong = songTableModel.getSortedSongAt(--index);
                currentSong = prevSong; //pointing to previous song
-//                Song s = songs.get(index);
-//                System.out.println("NextSorted: "+ s.getTitle());
+
                 System.out.println("Previous: "+ prevSong.getTitle());
-//                stop();
-                
-//                path = getCurrentSongFilePath();
+
                 play();
             }
         } catch (Exception e) {
@@ -327,6 +269,19 @@ public class CustomPlayer extends PlaybackListener {
             currentSongIndex = rowIndex;
             path = getCurrentSongFilePath();
         }
+    }
+    
+    
+    public int getCurrentSongIndex() {
+        int SongIndex = -1;
+            for(Song song: songTableModel.getSortedSongs()){
+                SongIndex++;
+                if(currentSong.getId() == song.getId())
+                    return SongIndex;
+
+                System.out.println("CurrentSongIndex: "+SongIndex);
+            }
+        return SongIndex;
     }
 
     private String getCurrentSongFilePath() {
@@ -353,42 +308,25 @@ public class CustomPlayer extends PlaybackListener {
                 return currentSortedSongPos;
             }
         }
-//        if(pressedNext){
-//            
-//            pressedNext = false;
-//            return currentSortedSongPos;
-//        }else if(pressedPrev){
-//            
-//            pressedPrev = false;
-//            return currentSortedSongPos;
-//        }
-            
             return -1;
     }
     
-    public void addSong(SongTableModel songTableModel, Database database) {
-        JFileChooser fileChooser = new JFileChooser();
-        int result = fileChooser.showOpenDialog(null);
-        if (result == JFileChooser.APPROVE_OPTION) {
-            File file = fileChooser.getSelectedFile();
-            Song song = extractSongFromFile(file);
-            if (song != null) {
-                database.addSong(song);
-                songTableModel.addSong(song);
-            } else {
-                JOptionPane.showMessageDialog(null, "Failed to extract ID3 tags from the selected file.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
+    public void addSong(SongTableModel songTableModel, Database database, Song song) {
+        database.addSong(song);
+        songTableModel.addSong(song);
+        setSortedSongList(songTableModel.getSortedSongs());
+            
     }
 
     public void deleteSong(JTable songTable, SongTableModel songTableModel, Database database) {
         int selectedRow = songTable.getSelectedRow();
         if (selectedRow != -1) {
-            int songId = (int) songTableModel.getValueAt(selectedRow, 6);
-            System.out.println("deleted songId: "+songId);
+            int songId = (int) songTableModel.getSortedSongAt(selectedRow).getId();
+            System.out.println("deleted songId: "+songId+ " selecedRow: "+selectedRow);
             database.deleteSong(songId);
             songTableModel.removeSong(selectedRow);
         }
+        setSortedSongList(songTableModel.getSortedSongs());
     }
 
     public Song extractSongFromFile(File file) {
@@ -429,20 +367,8 @@ public class CustomPlayer extends PlaybackListener {
 
             // when the song ends
             songFinished = true;
-
-//            if(playlist == null){
-//                // update gui
-//                GUI1.enablePlayButtonDisablePauseButton();
-//            }else{
-//                // last song in the playlist
-//                if(currentPlaylistIndex == playlist.size() - 1){
-//                    // update gui
-//                    musicPlayerGUI.enablePlayButtonDisablePauseButton();
-//                }else{
-//                    // go to the next song in the playlist
-                    next();
-//                }
-//            }
+            
+            next();
         }
     }
 
@@ -459,6 +385,96 @@ public class CustomPlayer extends PlaybackListener {
 //            volumeControl.setValue(gain);
 //        }
     }
+    
+    private void addRecentSong(Song song) {
+        if (!gui.shuffleEnabled) {
+            if (recentSongs.size() == 10) {
+                recentSongs.remove(0);
+            }
+            recentSongs.add(song);
+            saveRecentSongs();
+            gui.updateRecentMenu();
+
+        }
+    }
+    
+    public List<Song> getRecentSongs(){
+        return this.recentSongs;
+    }
+    
+    private void saveRecentSongs() {
+        Properties prop = new Properties();
+        try (OutputStream output = new FileOutputStream("recentSongs.properties")) {
+            for (int i = 0; i < recentSongs.size(); i++) {
+                prop.setProperty("song_" + i, recentSongs.get(i).toString());
+            }
+            prop.store(output, null);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    private void loadRecentSongs() {
+        recentSongs = new LinkedList<>();
+        Properties prop = new Properties();
+        try (InputStream input = new FileInputStream("recentSongs.properties")) {
+            prop.load(input);
+            for (String key : prop.stringPropertyNames()) {
+                String songString = prop.getProperty(key);
+                Song song = Song.fromString(songString);
+                if (song != null) {
+                    recentSongs.add(song);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+//    public void startLongPressTimer() {
+//        if (longPressTimer != null) {
+//            longPressTimer.stop();
+//        }
+//
+//        longPressTimer = new Timer(100, e -> skipForward());
+//        longPressTimer.setInitialDelay(500); // Initial delay before starting the fast skip
+//        longPressTimer.start();
+//    }
+//
+//    public void stopLongPressTimer() {
+//        if (longPressTimer != null) {
+//            System.out.println("Timer: "+longPressTimer);
+//            longPressTimer.stop();
+//            longPressTimer = null;
+//        }
+//    }
+//
+//    public void skipForward() {
+//    try {
+//        int skipMilliseconds = 10000; // 10 seconds
+//        long remainingTime = currentSong.getMp3File().getLengthInMilliseconds() - currentTimeInMilli;
+//        System.out.println("remainingTime: "+remainingTime);
+//        if (remainingTime <= skipMilliseconds) {
+//            next();
+//        } else {
+//            currentTimeInMilli += skipMilliseconds;
+//            int newFrame = (int) (currentTimeInMilli * currentSong.getFrameRatePerMilliseconds());
+//            currentFrame = newFrame;
+//            pressedNext = true;
+//            stop();
+//            FileInputStream fileInputStream = new FileInputStream(currentSong.getFilePath());
+//            BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+//            player = new AdvancedPlayer(bufferedInputStream);
+//            player.setPlayBackListener(this);
+//            startMusicThread();
+//            gui.setPlaybackSliderValue(newFrame, currentTimeInMilli);
+//        }
+//    } catch (Exception e) {
+//        JOptionPane.showMessageDialog(null, "Error skipping forward in mp3 file");
+//    }
+//}
+
+
     
     // create a thread that will handle updating the slider
     private void startPlaybackSliderThread(){
@@ -484,7 +500,6 @@ public class CustomPlayer extends PlaybackListener {
 
                         // calculate into frame value
                         int calculatedFrame = (int) (currentTimeInMilli * currentSong.getFrameRatePerMilliseconds());
-
 
                         // update gui
                         gui.setPlaybackSliderValue(calculatedFrame, currentTimeInMilli);

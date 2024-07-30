@@ -93,5 +93,25 @@ public class Song{
 
         return formattedTime;
     }
-    
+    @Override
+    public String toString() {
+        return id + "|" + title + "|" + artist + "|" + album + "|" + year + "|" + genre + "|" + comment + "|" + filePath;
+    }
+
+    public static Song fromString(String songString) {
+        String[] parts = songString.split("\\|");
+        if (parts.length == 8) {
+            return new Song(
+                Integer.parseInt(parts[0]),
+                parts[1],
+                parts[2],
+                parts[3],
+                parts[4],
+                parts[5],
+                parts[6],
+                parts[7]
+            );
+        }
+        return null;
+    }
 }

@@ -38,7 +38,7 @@ import javax.swing.event.RowSorterListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
-public class GUI1 extends javax.swing.JFrame {
+public class GUI1 extends javax.swing.JFrame{
     
     final private CustomPlayer player;
     final private Database database;
@@ -46,8 +46,7 @@ public class GUI1 extends javax.swing.JFrame {
     final private SongTableModel songTableModel;
     
     //GUI Variables declaration                   
-    
-    private javax.swing.JMenu FileMenu;
+
     private javax.swing.JPanel SongNamejPanel;
     private javax.swing.JLabel songAuthorLbl;
     private javax.swing.JLabel songNameLbl;
@@ -78,9 +77,14 @@ public class GUI1 extends javax.swing.JFrame {
     private java.awt.Button pause;
     private java.awt.Button play;
     private java.awt.Button stop;
-    
+    private JCheckBox shuffleCheckBox;
+    private JCheckBox repeatCheckBox;
+    public boolean shuffleEnabled = false;
+    public boolean repeatEnabled = false;
+        
     private javax.swing.JSlider volumeSlider; 
     
+    private javax.swing.JMenu FileMenu;
     private javax.swing.JMenuItem playASongMenuItem;
     private javax.swing.JMenuItem addSongMenuItem;
     private javax.swing.JMenuItem deleteSongMenuItem;
@@ -88,6 +92,17 @@ public class GUI1 extends javax.swing.JFrame {
     private javax.swing.JMenuItem addSongToPlaylistMenuItem;
     private javax.swing.JMenuItem exitMenuItem;
     private javax.swing.JMenuItem refresh;
+    
+    private javax.swing.JMenu ControlsMenu;
+    private javax.swing.JMenuItem playControl;
+    private javax.swing.JMenuItem nextControl;
+    private javax.swing.JMenuItem previousControl;
+    private javax.swing.JMenu playRecent;
+    private javax.swing.JMenuItem goToCurrentSong;
+    private javax.swing.JMenuItem increaseVolume;
+    private javax.swing.JMenuItem decreaseVolume;
+    private javax.swing.JCheckBoxMenuItem shuffleControl;
+    private javax.swing.JCheckBoxMenuItem repeatControl;
     
     private Song currentSong;
     private javax.swing.JSlider progressBarjSlider;
@@ -97,8 +112,9 @@ public class GUI1 extends javax.swing.JFrame {
     
 
     //GUI Constructor
-    public GUI1() {
-        database = new Database();
+    public GUI1(Database database) {
+        this.database = database;
+        this.database.addChangeListener(this); // Register as listener
         List<Song> songs = database.getAllSongs();
         songTableModel = new SongTableModel(songs);
         songTableModel.setTableUpdateListener(() -> {
@@ -109,7 +125,7 @@ public class GUI1 extends javax.swing.JFrame {
         playlists = playlistController.getAllPlaylists();
         initComponents();
     }
-                     
+        
     private void initComponents() {
 
         popupMenu = new javax.swing.JPopupMenu();
@@ -122,6 +138,8 @@ public class GUI1 extends javax.swing.JFrame {
         next = new java.awt.Button();
         previous = new java.awt.Button();
         volumeSlider = new javax.swing.JSlider();
+        shuffleCheckBox = new javax.swing.JCheckBox("Shuffle");
+        repeatCheckBox = new javax.swing.JCheckBox("Repeat");
         
         SongNamejPanel = new javax.swing.JPanel();
         songNameLbl = new javax.swing.JLabel();
@@ -134,7 +152,7 @@ public class GUI1 extends javax.swing.JFrame {
         rootTree = new javax.swing.JTree(rootTreeModel);
         rootTree.setRootVisible(true);
         rootTree.setShowsRootHandles(true);
-        rootTree.setEditable(true);
+        rootTree.setEditable(false);
 
         // Create the "Library" node
         libraryNode = new javax.swing.tree.DefaultMutableTreeNode("Library"){
@@ -145,7 +163,6 @@ public class GUI1 extends javax.swing.JFrame {
             
         };
         
-
         // Create the "Playlist" node with user created playlists from Database
         playlistNode = new javax.swing.tree.DefaultMutableTreeNode("Playlists");
         for(Playlist p : playlists){
@@ -203,6 +220,18 @@ public class GUI1 extends javax.swing.JFrame {
         createNewPlaylistMenuItem = new javax.swing.JMenuItem();
         exitMenuItem = new javax.swing.JMenuItem();
         refresh = new javax.swing.JMenuItem();
+        
+        ControlsMenu = new javax.swing.JMenu();
+        playControl = new javax.swing.JMenuItem();
+        nextControl = new javax.swing.JMenuItem();
+        previousControl = new javax.swing.JMenuItem();
+        playRecent = new javax.swing.JMenu();
+        goToCurrentSong = new javax.swing.JMenuItem();
+        increaseVolume = new javax.swing.JMenuItem();
+        decreaseVolume = new javax.swing.JMenuItem();
+        shuffleControl = new javax.swing.JCheckBoxMenuItem("Shuffle");
+        repeatControl = new javax.swing.JCheckBoxMenuItem("Repeat");
+        
       
         setTitle("MyTunes");
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -210,7 +239,7 @@ public class GUI1 extends javax.swing.JFrame {
         ActionButtonsjPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
 
         stop.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        stop.setLabel("stop");
+        stop.setLabel("Stop");
         stop.addActionListener((java.awt.event.ActionEvent evt) -> {
             stopActionPerformed(evt);
         });
@@ -249,46 +278,64 @@ public class GUI1 extends javax.swing.JFrame {
                 volumeSliderStateChanged(evt);
             }
         });
-
+        
+//        ImageIcon shuffleIcon = new ImageIcon("C:\\Users\\030834321\\Downloads\\shuffle.png");
+//        shuffleCheckBox.setIcon(new ImageIcon(shuffleIcon.getImage().getScaledInstance(20, 20, java.awt.Image.SCALE_SMOOTH)));
+//        shuffleCheckBox.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+//        shuffleCheckBox.addItemListener((e) -> ShuffleActionPerformed(e, songTableModel.getSortedSongs()));
+        
+//        ImageIcon repeatIcon = new ImageIcon("C:\\Users\\030834321\\Downloads\\repeat.png");
+//        repeatCheckBox.setIcon(new ImageIcon(repeatIcon.getImage().getScaledInstance(20, 20, java.awt.Image.SCALE_SMOOTH)));
+//        repeatCheckBox.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+//        repeatCheckBox.addItemListener((e) -> RepeatActionPerformed(e));
+        
+        
         javax.swing.GroupLayout ActionButtonsjPanelLayout = new javax.swing.GroupLayout(ActionButtonsjPanel);
         ActionButtonsjPanel.setLayout(ActionButtonsjPanelLayout);
         ActionButtonsjPanelLayout.setHorizontalGroup(
             ActionButtonsjPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(ActionButtonsjPanelLayout.createSequentialGroup()
-                .addGap(20, 20, 20)
+                .addGap(25, 25, 500)
+//                .addComponent(shuffleCheckBox, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
+//                .addGap(20, 20, 20)
+//                .addComponent(repeatCheckBox, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
+//                .addGap(20, 20, 20)
                 .addComponent(previous, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(19, 19, 19)
-                .addComponent(stop, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(24, 24, 24)
-                .addComponent(play, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(24, 24, 24)
-                .addComponent(pause, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(30, 30, 30)
-                .addComponent(next, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(43, 43, 43)
+                .addGap(20, 20, 20)
+                .addComponent(stop, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(20, 20, 20)
+                .addComponent(play, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(20, 20, 20)
+                .addComponent(pause, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(20, 20, 20)
+                .addComponent(next, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(45, 45, 45)
                 .addComponent(volumeSlider, javax.swing.GroupLayout.PREFERRED_SIZE, 215, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(32, 32, 32))
         );
         ActionButtonsjPanelLayout.setVerticalGroup(
             ActionButtonsjPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, ActionButtonsjPanelLayout.createSequentialGroup()
-                .addContainerGap(22, Short.MAX_VALUE)
+                .addContainerGap(20, 25)
                 .addGroup(ActionButtonsjPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(next, javax.swing.GroupLayout.DEFAULT_SIZE, 68, Short.MAX_VALUE)
+                    .addComponent(next, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(stop, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(play, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(pause, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(previous, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(volumeSlider, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(volumeSlider, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
+//                    .addComponent(shuffleCheckBox, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+//                    .addComponent(repeatCheckBox, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
 
-        SongNamejPanel.setBackground(new java.awt.Color(255, 153, 153));
+        SongNamejPanel.setBackground(new java.awt.Color(0, 0, 0));
         SongNamejPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
 
         songNameLbl.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
+        songNameLbl.setForeground(new java.awt.Color(255, 255, 255));
         songNameLbl.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        songNameLbl.setText("Song name");
+        songNameLbl.setText("Song Name");
         songNameLbl.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         songNameLbl.setIconTextGap(0);
         songNameLbl.setMaximumSize(new java.awt.Dimension(609, 512));
@@ -296,6 +343,7 @@ public class GUI1 extends javax.swing.JFrame {
         songNameLbl.setPreferredSize(new java.awt.Dimension(609, 512));
 
         songAuthorLbl.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        songAuthorLbl.setForeground(new java.awt.Color(255, 255, 255));
         songAuthorLbl.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         songAuthorLbl.setText("Author");
 
@@ -323,23 +371,44 @@ public class GUI1 extends javax.swing.JFrame {
         TreejScrollPane.setViewportView(rootTree);
 
         progressBarjPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
-        progressBarjPanel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+//        progressBarjPanel.setLayout(new javax.swing.GroupLayout));
 
         startTimerLbl.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         startTimerLbl.setText("0:00:00");
         startTimerLbl.setMaximumSize(new java.awt.Dimension(100, 80));
-        progressBarjPanel.add(startTimerLbl, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 1, 80, -1));
-
-        stopTimerLbl.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        stopTimerLbl.setText("0:00:00");
-        stopTimerLbl.setMaximumSize(new java.awt.Dimension(100, 80));
-        progressBarjPanel.add(stopTimerLbl, new org.netbeans.lib.awtextra.AbsoluteConstraints(689, 1, 86, -1));
+//        progressBarjPanel.add(startTimerLbl);
 
         progressBarjSlider.setValue(0);
         progressBarjSlider.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         progressBarjSlider.setDebugGraphicsOptions(javax.swing.DebugGraphics.NONE_OPTION);
         progressBarjSlider.setPreferredSize(new java.awt.Dimension(300, 80));
-        progressBarjPanel.add(progressBarjSlider, new org.netbeans.lib.awtextra.AbsoluteConstraints(243, 5, 417, 11));
+//        progressBarjPanel.add(progressBarjSlider);
+
+        stopTimerLbl.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        stopTimerLbl.setText("0:00:00");
+        stopTimerLbl.setMaximumSize(new java.awt.Dimension(100, 80));
+//        progressBarjPanel.add(stopTimerLbl);
+
+        javax.swing.GroupLayout progressBarjPanelLayout = new javax.swing.GroupLayout(progressBarjPanel);
+        progressBarjPanel.setLayout(progressBarjPanelLayout);
+        progressBarjPanelLayout.setHorizontalGroup(
+            progressBarjPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+            .addGroup(progressBarjPanelLayout.createSequentialGroup()
+                .addGap(100, 100, 650)
+                .addComponent(startTimerLbl, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(30, 30, 30)
+                .addComponent(progressBarjSlider, javax.swing.GroupLayout.PREFERRED_SIZE, 415, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(30, 30, 30)
+                .addComponent(stopTimerLbl, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
+        );
+        progressBarjPanelLayout.setVerticalGroup(
+            progressBarjPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+            .addComponent(startTimerLbl, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(progressBarjSlider, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(stopTimerLbl, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+        );
+
+        
            
         //Songs Table
         songTable = new JTable(songTableModel);
@@ -373,7 +442,7 @@ public class GUI1 extends javax.swing.JFrame {
                         int modelIndex = sorter.convertRowIndexToModel(i);
                         sortedSongs.add(songTableModel.getSongAt(modelIndex));
                     }
-                    if(sortedSongs.size() != 0){
+                    if(!sortedSongs.isEmpty()){
                         songTableModel.setSortedSongs(sortedSongs);
                         player.setSortedSongList(sortedSongs);
                     }
@@ -472,7 +541,7 @@ public class GUI1 extends javax.swing.JFrame {
                     for (File file : droppedFiles) {
                         Song song = player.extractSongFromFile(file);
                         database.addSong(song);
-                        songTableModel.addSong(song);
+//                        songTableModel.addSong(song);
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -533,10 +602,146 @@ public class GUI1 extends javax.swing.JFrame {
             refreshMenuItemActionPerformed(evt);
         });
         FileMenu.add(refresh);
+        
+        ControlsMenu.setText("Controls");
+        
+        InputMap inputMap = songTable.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = songTable.getActionMap();
+        
+        KeyStroke playSongkeyStroke = KeyStroke.getKeyStroke("SPACE");
 
+        // Add key binding for "Space" play
+        inputMap.put(playSongkeyStroke, "playSong");
+        actionMap.put("playSong", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("play triggered from control menu");
+                playActionPerformed(e);
+            }
+        });
+        
+        playControl.setText("Play");
+        playControl.addActionListener((java.awt.event.ActionEvent evt) -> {
+            playActionPerformed(evt);
+        });
+        playControl.setAccelerator(playSongkeyStroke);
+        playControl.addActionListener(this::playActionPerformed);
+        ControlsMenu.add(playControl);
+        playControl.setFocusable(false);
+        
+        KeyStroke nextSongkeyStroke = KeyStroke.getKeyStroke("control RIGHT");
+
+        // Add key binding for "ctrl + right arrow" next
+        inputMap.put(nextSongkeyStroke, "nextSong");
+        actionMap.put("nextSong", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("next triggered from control menu");
+                nextActionPerformed(e);
+//                player.skipForward();
+            }
+        });
+        
+        nextControl.setText("Next");
+        nextControl.addActionListener((java.awt.event.ActionEvent evt) -> {
+            nextActionPerformed(evt);
+//            player.skipForward();
+        });
+        nextControl.setAccelerator(nextSongkeyStroke);
+        ControlsMenu.add(nextControl);
+
+        KeyStroke prevSongkeyStroke = KeyStroke.getKeyStroke("control LEFT");
+
+        // Add key binding for "ctrl + left arrow" previous
+        inputMap.put(prevSongkeyStroke, "prevSong");
+        actionMap.put("prevSong", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("previous triggered from control menu");
+                previousActionPerformed(e);
+            }
+        });
+        previousControl.setText("Previous");
+        previousControl.addActionListener((java.awt.event.ActionEvent evt) -> {
+            deleteSongMenuItemActionPerformed(evt);
+        });
+        previousControl.setAccelerator(prevSongkeyStroke);
+        ControlsMenu.add(previousControl);
+        
+        playRecent.setText("Play Recent");
+        ControlsMenu.add(playRecent);
+        updateRecentMenu();
+        
+        // Add key binding for "Ctrl-L"
+        KeyStroke goToCurrentSongKeyStroke = KeyStroke.getKeyStroke("control L");
+
+        inputMap.put(goToCurrentSongKeyStroke, "goToCurrentSong");
+        actionMap.put("goToCurrentSong", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                goToCurrentSong();
+            }
+        });
+        
+        goToCurrentSong.setText("Go To Current Song");
+        goToCurrentSong.addActionListener((java.awt.event.ActionEvent evt) -> {
+            goToCurrentSong();
+        });
+        goToCurrentSong.setAccelerator(goToCurrentSongKeyStroke);
+        ControlsMenu.add(goToCurrentSong);
+        
+        ControlsMenu.addSeparator();
+        
+        // Add key binding for "Ctrl-I"
+        KeyStroke increaseVolKeyStroke = KeyStroke.getKeyStroke("control I");
+
+        inputMap.put(increaseVolKeyStroke, "increaseVolume");
+        actionMap.put("increaseVolume", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                increaseVolume();
+            }
+        });
+        increaseVolume.setText("Increase Volume");
+        increaseVolume.addActionListener((java.awt.event.ActionEvent evt) -> {
+            increaseVolume();
+        });
+        increaseVolume.setAccelerator(increaseVolKeyStroke);
+        ControlsMenu.add(increaseVolume);
+        
+        // Add key binding for "Ctrl-D"
+        KeyStroke decreaseVolKeyStroke = KeyStroke.getKeyStroke("control D");
+
+        inputMap.put(decreaseVolKeyStroke, "decreaseVolume");
+        actionMap.put("decreaseVolume", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                decreaseVolume();
+            }
+        });
+        decreaseVolume.setText("Decrease Volume");
+        decreaseVolume.addActionListener((java.awt.event.ActionEvent evt) -> {
+            decreaseVolume();
+        });
+        decreaseVolume.setAccelerator(decreaseVolKeyStroke);
+        ControlsMenu.add(decreaseVolume);
+        
+        ControlsMenu.addSeparator();
+        
+        shuffleControl.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        shuffleControl.addItemListener((e) -> ShuffleActionPerformed(e, songTableModel.getSortedSongs()));
+        ControlsMenu.add(shuffleControl);
+        
+        repeatControl.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        repeatControl.addItemListener((e) -> RepeatActionPerformed(e));
+        ControlsMenu.add(repeatControl);
+        
+        
         jMenuBar1.add(FileMenu);
+        jMenuBar1.add(ControlsMenu);
 
         setJMenuBar(jMenuBar1);
+    
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -568,7 +773,7 @@ public class GUI1 extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(SongNamejPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(ActionButtonsjPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(ActionButtonsjPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
 
@@ -578,20 +783,20 @@ public class GUI1 extends javax.swing.JFrame {
     //need to edit this
     private void playASongMenuItemActionPerformed(java.awt.event.ActionEvent evt) {                                                  
         JFileChooser fileChooser = new JFileChooser();
-                int result = fileChooser.showOpenDialog(GUI1.this);
-                if (result == JFileChooser.APPROVE_OPTION) {
-                    File file = fileChooser.getSelectedFile();
-                    Song song = player.extractSongFromFile(file);
-                    if (song != null) {
-                        database.addSong(song);
-                        songTableModel.addSong(song);
-                        refreshSongTable();
-                        player.setCurrentSong(song);
-                        player.play();
-                    } else {
-                        JOptionPane.showMessageDialog(GUI1.this, "Failed to extract ID3 tags from the selected file.", "Error", JOptionPane.ERROR_MESSAGE);
-                    }
-                }
+        int result = fileChooser.showOpenDialog(GUI1.this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            Song song = player.extractSongFromFile(file);
+            if (song != null) {
+                database.addSong(song);
+                songTableModel.addSong(song);
+                refreshSongTable();
+                player.setCurrentSong(song);
+                player.play();
+            } else {
+                JOptionPane.showMessageDialog(GUI1.this, "Failed to extract ID3 tags from the selected file.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }                                                 
 
     private void exitMenuItemActionPerformed(java.awt.event.ActionEvent evt) {                                             
@@ -601,16 +806,39 @@ public class GUI1 extends javax.swing.JFrame {
     private void refreshMenuItemActionPerformed(java.awt.event.ActionEvent evt) {
         this.revalidate();
         this.repaint();
+        this.playlists = playlistController.getAllPlaylists();
+        this.refreshSongTable();
     }
     
-    private void addSongMenuItemActionPerformed(java.awt.event.ActionEvent evt) {                                                
-        player.addSong(songTableModel,database);
-        refreshSongTable();
+    private void addSongMenuItemActionPerformed(java.awt.event.ActionEvent evt) { 
+        JFileChooser fileChooser = new JFileChooser();
+        int result = fileChooser.showOpenDialog(null);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            Song song = player.extractSongFromFile(file);
+            if (song != null) {
+                if(playlistSelectedNode == null)
+                    player.addSong(songTableModel,database, song);
+                else
+                    playlistController.addSongToPlaylist(song, playlistSelectedNode);
+            } else {
+                JOptionPane.showMessageDialog(null, "Failed to extract ID3 tags from the selected file.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        this.refreshSongTable();
     }  
     
-    private void deleteSongMenuItemActionPerformed(java.awt.event.ActionEvent evt) {                                                
-        player.deleteSong(songTable,songTableModel,database);
-        refreshSongTable();
+    private void deleteSongMenuItemActionPerformed(java.awt.event.ActionEvent evt) {
+        if(playlistSelectedNode == null)
+            player.deleteSong(songTable,songTableModel,database);
+        else{
+            System.out.println("Deleting: "+player.getCurrentSong().getTitle()+" from: "+playlistSelectedNode.getName()+ " playlist");
+            playlistController.deleteSongFromPlaylist(player.getCurrentSong(), playlistSelectedNode);
+        }
+        this.refreshSongTable();
+        for (GUI1 listener : this.database.getListeners()) {
+            listener.refreshSongTable();
+        }
     }
     
     private void addSongToPlaylistMenuItemActionPerformed(Playlist playlist) {                                                
@@ -620,9 +848,25 @@ public class GUI1 extends javax.swing.JFrame {
             Song selectedSong = songTableModel.getSongAt(songIndex);
             playlistController.addSongToPlaylist(selectedSong, playlist);
         }
-        refreshSongTable();
+        this.refreshSongTable();
     }
 
+    private void increaseVolume() {
+        int currentVolume = volumeSlider.getValue();
+        int newVolume = Math.min(currentVolume + 5, 100); // Ensure volume doesn't exceed 100%
+        volumeSlider.setValue(newVolume);
+        float gain = (float) (Math.log(newVolume / 100.0) / Math.log(10.0) * 20.0);  // Convert to decibels
+        player.setVolume((int) gain);
+    }
+
+    private void decreaseVolume() {
+        int currentVolume = volumeSlider.getValue();
+        int newVolume = Math.max(currentVolume - 5, 0); // Ensure volume doesn't go below 0%
+        volumeSlider.setValue(newVolume);
+        float gain = (float) (Math.log(newVolume / 100.0) / Math.log(10.0) * 20.0);  // Convert to decibels
+        player.setVolume((int) gain);
+    }
+    
     private void volumeSliderStateChanged(ChangeEvent evt) {                                          
         JSlider source = (JSlider) evt.getSource();
         if (!source.getValueIsAdjusting()) {
@@ -642,6 +886,7 @@ public class GUI1 extends javax.swing.JFrame {
 
     private void playActionPerformed(java.awt.event.ActionEvent evt) {                                  
         player.play();
+        updateRecentMenu();
     }                                 
 
     private void pauseActionPerformed(java.awt.event.ActionEvent evt) {   
@@ -655,21 +900,33 @@ public class GUI1 extends javax.swing.JFrame {
 //            unpause = false;
 //        }
         
-    }                                                              
+    }     
+    
+    private void ShuffleActionPerformed(java.awt.event.ItemEvent evt, List<Song> songs) {   
+        shuffleEnabled = shuffleControl.isSelected(); 
+        System.out.println("shuffleEnabled: "+shuffleEnabled);
+        player.setSortedSongList(songs);
+    }  
+    
+    private void RepeatActionPerformed(java.awt.event.ItemEvent evt) {   
+        repeatEnabled = repeatControl.isSelected(); 
+        System.out.println("repeatEnabled: "+repeatEnabled);
+    }
+    
 
     private void stopActionPerformed(java.awt.event.ActionEvent evt) {                                         
         player.stop();
     }                                                                          
     
-    private void refreshSongTable() {
+    public void refreshSongTable() {
         if(playlistSelectedNode != null){
-            songTableModel.setSongs(playlistSelectedNode.getSongs());
+            this.playlists = playlistController.getAllPlaylists();
+            songTableModel.setSongs(playlistController.getAllPlaylistSongs(playlistSelectedNode));
 //            songTableModel.fireTableDataChanged();
         } else{ //if library is selected, we need to get all the songs
             songTableModel.setSongs(database.getAllSongs());
 //            songTableModel.fireTableDataChanged();
-        }
-            
+        }      
     }
     
     public void setPlaybackSliderValue(int frame, int currentTimeInMilli) {
@@ -743,6 +1000,30 @@ public class GUI1 extends javax.swing.JFrame {
             addSongToPlaylistMenuItem.add(playlistItem);
         }
     }
+    
+    public void updateRecentMenu() {
+        playRecent.removeAll();
+        List<Song> recentSongs = player.getRecentSongs();
+        for (Song song : recentSongs) {
+            JMenuItem recentSongsItem = new JMenuItem(song.getTitle());
+            recentSongsItem.addActionListener(new java.awt.event.ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    player.setCurrentSong(song);
+                    player.play();
+                }
+            });
+            playRecent.add(recentSongsItem);
+        }
+    }
+
+    public void goToCurrentSong() {
+        int currentSongIndex = player.getCurrentSongIndex();
+        if (currentSongIndex >= 0) {
+            songTable.setRowSelectionInterval(currentSongIndex, currentSongIndex);
+            songTable.scrollRectToVisible(songTable.getCellRect(currentSongIndex, 0, true));
+        }
+    }
 
     // Method to handle tree selection changes
     private void treeSelectionChanged(javax.swing.event.TreeSelectionEvent evt) {
@@ -759,13 +1040,15 @@ public class GUI1 extends javax.swing.JFrame {
             // Fetch all songs from the db and display in the library
             System.out.println("library selected: "+ songTableModel.getSortedSongs());
 //            updateSongTable(songTableModel.getSortedSongs());
-            refreshSongTable();
+            this.refreshSongTable();
         } else if (selectedNode.getParent() == playlistNode) {
             // Fetch songs from the selected playlist and display in the JTable
             Playlist selectedPlaylist = getPlaylistByName(nodeName); // You need to implement this method
             if (selectedPlaylist != null) {
-                updateSongTable(selectedPlaylist.getSongs());
+//                updateSongTable(selectedPlaylist.getSongs());
+                
                 playlistSelectedNode = selectedPlaylist;
+                this.refreshSongTable();
             }
         }
     }
@@ -850,18 +1133,32 @@ public class GUI1 extends javax.swing.JFrame {
 //            System.out.println("new windoe click triggered: inside if");
             String PlaylistName = node.getUserObject().toString();
             Playlist p = getPlaylistByName(PlaylistName);
-            GUI1 playlistWindow = new GUI1();
+            GUI1 playlistWindow = new GUI1(this.database);
+            this.database.addChangeListener(playlistWindow);
             playlistWindow.playlistSelectedNode = playlistSelectedNode;
             playlistSelectedNode = null;
             playlistWindow.setTitle(PlaylistName +" Playlist Songs");
             playlistWindow.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+            // Add a WindowListener to remove the listener when the window is closed
+            playlistWindow.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.out.println("Window is closing, removing the listener");
+                    database.removeListener(playlistWindow);
+                }
+            });
+            
             // Disable treejScrollPane in the new window
+//            playlistWindow.rootTree.setSelectionPath(new TreePath(this.playlistSelectedNode.getPath()));
             playlistWindow.TreejScrollPane.getHorizontalScrollBar().setEnabled(false);
             playlistWindow.TreejScrollPane.getVerticalScrollBar().setEnabled(false);
             playlistWindow.TreejScrollPane.getViewport().getView().setEnabled(false);
             
+            this.rootTree.setSelectionPath(new TreePath(this.libraryNode.getPath()));
+           
             if (p != null) {
-                playlistWindow.updateSongTable(p.getSongs());
+//                playlistWindow.updateSongTable(p.getSongs());
+                    playlistWindow.refreshSongTable();
             }
             
             // Move the selected playlist to the new window
@@ -880,6 +1177,7 @@ public class GUI1 extends javax.swing.JFrame {
                             playlistWindow.playlistController.addSongToPlaylist(song, playlistWindow.playlistSelectedNode);
                         }
                         dtde.dropComplete(true);
+                        playlistWindow.refreshSongTable();
                     } else {
                         dtde.rejectDrop();
                     }
@@ -890,7 +1188,6 @@ public class GUI1 extends javax.swing.JFrame {
                 }
             });
             
-        refreshSongTable();
     }
     
     private class SongTransferHandler extends TransferHandler {
@@ -937,5 +1234,3 @@ public class GUI1 extends javax.swing.JFrame {
         }
     }
 }
-
-
