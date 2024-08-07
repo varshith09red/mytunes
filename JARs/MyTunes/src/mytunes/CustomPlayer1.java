@@ -209,20 +209,24 @@ public class CustomPlayer1 {
     }
     
     public void addSong(SongTableModel songTableModel, Database database) {
-        JFileChooser fileChooser = new JFileChooser();
-        int result = fileChooser.showOpenDialog(null);
-        if (result == JFileChooser.APPROVE_OPTION) {
-            File file = fileChooser.getSelectedFile();
-            Song song = extractSongFromFile(file);
-            if (song != null) {
-                database.addSong(song);
-                songTableModel.addSong(song);
-                if(gui.playlistSelectedNode != null){
-                    gui.playlistController.addSongToPlaylist(song, gui.playlistSelectedNode);
+        try {
+            JFileChooser fileChooser = new JFileChooser();
+            int result = fileChooser.showOpenDialog(null);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                File file = fileChooser.getSelectedFile();
+                Song song = extractSongFromFile(file);
+                if (song != null) {
+                    database.addSong(song);
+                    songTableModel.addSong(song);
+                    if(gui.playlistSelectedNode != null){
+                        gui.playlistController.addSongToPlaylist(song, gui.playlistSelectedNode);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(null, "Failed to extract ID3 tags from the selected file.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
-            } else {
-                JOptionPane.showMessageDialog(null, "Failed to extract ID3 tags from the selected file.", "Error", JOptionPane.ERROR_MESSAGE);
             }
+        } catch(Exception e){
+            e.printStackTrace();
         }
     }
 

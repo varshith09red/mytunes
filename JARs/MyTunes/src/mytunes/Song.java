@@ -86,6 +86,7 @@ public class Song{
     public double getFrameRatePerMilliseconds(){return frameRatePerMilliseconds;}
     
     private String convertToSongLengthFormat(){
+//        System.out.println("Length of: "+title+" : "+mp3File.getLengthInSeconds());
         long hours = mp3File.getLengthInSeconds() / 3600;
         long minutes = (mp3File.getLengthInSeconds() % 3600) / 60;
         long seconds = mp3File.getLengthInSeconds() % 60;
@@ -93,6 +94,7 @@ public class Song{
 
         return formattedTime;
     }
+    
     @Override
     public String toString() {
         return id + "|" + title + "|" + artist + "|" + album + "|" + year + "|" + genre + "|" + comment + "|" + filePath;

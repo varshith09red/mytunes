@@ -43,6 +43,7 @@ import java.util.Properties;
 public class CustomPlayer extends PlaybackListener {
 
     private AdvancedPlayer player;
+    private VolumeControlAudioDevice audioDevice;
     private String path;
     private int currentSongIndex;
     
@@ -50,14 +51,15 @@ public class CustomPlayer extends PlaybackListener {
     private final SongTableModel songTableModel;
     
     private static final Object playSignal = new Object();
-    private boolean isPaused;
+    private boolean isPaused, isPlaying;
     private int currentFrame;
     
     private FloatControl volumeControl;
     private Song currentSong;
     private boolean songFinished;
-    private boolean pressedNext, pressedPrev;
+    public boolean pressedNext, pressedPrev, pressedStop;
     private List<Song> recentSongs;
+    public boolean songSelectedFromRecentSongs;
     
 //    private ArrayList<Song> playlist;
 //    private List<Integer> songIds;
@@ -66,7 +68,7 @@ public class CustomPlayer extends PlaybackListener {
 //    private int currentPlaylistIndex;
     
     // track how many milliseconds has passed since playing the song (used for updating the slider)
-    private int currentTimeInMilli;
+    private int currentTimeInSec;
     private GUI1 gui;
     
      private Timer longPressTimer;
@@ -74,6 +76,7 @@ public class CustomPlayer extends PlaybackListener {
     public CustomPlayer(GUI1 gui, SongTableModel songTableModel, List<Song> songs) {
         this.path = null;
         this.isPaused = false;
+        this.isPlaying = false;
         this.currentSongIndex = -1;
         this.currentSong = null;
         this.songs = songs;
@@ -82,12 +85,14 @@ public class CustomPlayer extends PlaybackListener {
         this.pressedNext = false;
         this.pressedPrev = false;
         this.recentSongs = new LinkedList<>();
+        this.pressedStop = false;
+        this.songSelectedFromRecentSongs = false;
         loadRecentSongs();
 //        initializeVolumeControl();
     }
 
-    public void setCurrentTimeInMilli(int timeInMilli){
-        currentTimeInMilli = timeInMilli;
+    public void setCurrentTimeInSec(int timeInSec){
+        currentTimeInSec = timeInSec;
     }
 
     public Song getCurrentSong(){
@@ -156,6 +161,7 @@ public class CustomPlayer extends PlaybackListener {
             gui.updateSongTitleAndArtist(currentSong);
             gui.updatePlaybackSlider(currentSong);
             addRecentSong(currentSong);
+            audioDevice = new VolumeControlAudioDevice();
             // create a new advanced player
             player = new AdvancedPlayer(bufferedInputStream);
             player.setPlayBackListener(this);
@@ -203,16 +209,17 @@ public class CustomPlayer extends PlaybackListener {
         try {
             if(player != null){
                 player.stop();
+                isPlaying = false;
                 player.close();
-                player = null;
-                if(!isPaused){
-                    currentFrame = 0; // reset frame
-                    currentTimeInMilli = 0; // reset current time in milli
-                    gui.setPlaybackSliderValue(currentFrame, currentTimeInMilli);
-                }
+                player = null; 
             }
+            if(!isPaused){
+                    currentFrame = 0; // reset frame
+                    currentTimeInSec = 0; // reset current time in milli
+                    gui.setPlaybackSliderValue(currentFrame, currentTimeInSec);
+                }            
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Error stopping mp3 file");
+//            JOptionPane.showMessageDialog(null, "Error stopping mp3 file");
         }
     }
 
@@ -223,6 +230,8 @@ public class CustomPlayer extends PlaybackListener {
             if (++index <= (songs.size())) {
                pressedNext = true;
                Song nextSong = null;
+               if(index == songs.size())
+                   index = 0;
                if(gui.shuffleEnabled && !gui.repeatEnabled)
                     nextSong = this.songs.get(index);
                if(gui.repeatEnabled)
@@ -232,7 +241,8 @@ public class CustomPlayer extends PlaybackListener {
                currentSong = nextSong; //pointing to next song
 
                 System.out.println("Next: "+ nextSong.getTitle()+" : index: "+index);
-
+                stop();
+                pressedStop = true;
                 play();
             }
         } catch (Exception e) {
@@ -245,8 +255,10 @@ public class CustomPlayer extends PlaybackListener {
         try {
             int index = getSortedSongPosition(currentSongIndex);
             if (index >= 0) {
-               pressedNext = true;
+               pressedPrev = true;
                Song prevSong = null;
+               if(index == 0)
+                   index = songs.size();
                if(gui.shuffleEnabled && !gui.repeatEnabled)
                     prevSong = this.songs.get(--index);
                if(gui.repeatEnabled)
@@ -256,7 +268,8 @@ public class CustomPlayer extends PlaybackListener {
                currentSong = prevSong; //pointing to previous song
 
                 System.out.println("Previous: "+ prevSong.getTitle());
-
+                stop();
+                pressedStop = true;
                 play();
             }
         } catch (Exception e) {
@@ -312,17 +325,20 @@ public class CustomPlayer extends PlaybackListener {
     }
     
     public void addSong(SongTableModel songTableModel, Database database, Song song) {
-        database.addSong(song);
-        songTableModel.addSong(song);
-        setSortedSongList(songTableModel.getSortedSongs());
-            
+        try {
+            database.addSong(song);
+            songTableModel.addSong(song);
+            setSortedSongList(songTableModel.getSortedSongs());
+        } catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     public void deleteSong(JTable songTable, SongTableModel songTableModel, Database database) {
         int selectedRow = songTable.getSelectedRow();
         if (selectedRow != -1) {
             int songId = (int) songTableModel.getSortedSongAt(selectedRow).getId();
-            System.out.println("deleted songId: "+songId+ " selecedRow: "+selectedRow);
+            System.out.println("deleted songId: "+songId+ " rowIndex:"+ selectedRow);
             database.deleteSong(songId);
             songTableModel.removeSong(selectedRow);
         }
@@ -354,6 +370,9 @@ public class CustomPlayer extends PlaybackListener {
         songFinished = false;
         pressedNext = false;
         pressedPrev = false;
+//        songSelectedFromRecentSongs = false;
+        pressedStop = false;
+        isPlaying = true;
     }
     
     @Override
@@ -363,31 +382,33 @@ public class CustomPlayer extends PlaybackListener {
             currentFrame += (int) ((double) e.getFrame() * currentSong.getFrameRatePerMilliseconds());
         }else{
             // if the user pressed next or prev we don't need to execute the rest of the code
-            if(pressedNext || pressedPrev) return;
-
-            // when the song ends
+            if(pressedNext || pressedPrev || pressedStop || songSelectedFromRecentSongs)
+            {
+                songFinished = false;
+                return;
+            }
+            // when the song ends (uncommenting this effecting recent and lot other features, need to handle playing next song when  current is completed)
             songFinished = true;
-            
-            next();
+            if(songFinished){
+               System.out.println("CustomPlayer: Current Song finished, playing next song");
+               next(); 
+            }
+             
         }
     }
 
 
     public void setVolume(int volume) {
-        System.out.println("Volume: "+ volume);
-//        if (audioClip != null) {
-//            FloatControl volumeControl = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
-//            float min = volumeControl.getMinimum();
-//            float max = volumeControl.getMaximum();
-//            float range = max - min;
-//            float gain = (range * (volume / 100.0f)) + min;
-//            System.out.println("setVolume: "+gain);
-//            volumeControl.setValue(gain);
-//        }
+//        System.out.println("Volume: "+ volume);
+        if (audioDevice != null) {
+            float volumeValue = volume / 100.0f;
+            audioDevice.setVolume(volumeValue);
+            System.out.println("Volume set to: " + volumeValue);
+        }
     }
     
     private void addRecentSong(Song song) {
-        if (!gui.shuffleEnabled) {
+        if (!gui.shuffleEnabled && !isPaused) {
             if (recentSongs.size() == 10) {
                 recentSongs.remove(0);
             }
@@ -403,12 +424,11 @@ public class CustomPlayer extends PlaybackListener {
     }
     
     private void saveRecentSongs() {
-        Properties prop = new Properties();
-        try (OutputStream output = new FileOutputStream("recentSongs.properties")) {
-            for (int i = 0; i < recentSongs.size(); i++) {
-                prop.setProperty("song_" + i, recentSongs.get(i).toString());
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("recentSongs.txt"))) {
+            for (Song song : recentSongs) {
+                writer.write(song.toString());
+                writer.newLine();
             }
-            prop.store(output, null);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -416,12 +436,10 @@ public class CustomPlayer extends PlaybackListener {
     
     private void loadRecentSongs() {
         recentSongs = new LinkedList<>();
-        Properties prop = new Properties();
-        try (InputStream input = new FileInputStream("recentSongs.properties")) {
-            prop.load(input);
-            for (String key : prop.stringPropertyNames()) {
-                String songString = prop.getProperty(key);
-                Song song = Song.fromString(songString);
+        try (BufferedReader reader = new BufferedReader(new FileReader("recentSongs.txt"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                Song song = Song.fromString(line);
                 if (song != null) {
                     recentSongs.add(song);
                 }
@@ -452,13 +470,13 @@ public class CustomPlayer extends PlaybackListener {
 //    public void skipForward() {
 //    try {
 //        int skipMilliseconds = 10000; // 10 seconds
-//        long remainingTime = currentSong.getMp3File().getLengthInMilliseconds() - currentTimeInMilli;
+//        long remainingTime = currentSong.getMp3File().getLengthInMilliseconds() - currentTimeInSec;
 //        System.out.println("remainingTime: "+remainingTime);
 //        if (remainingTime <= skipMilliseconds) {
 //            next();
 //        } else {
-//            currentTimeInMilli += skipMilliseconds;
-//            int newFrame = (int) (currentTimeInMilli * currentSong.getFrameRatePerMilliseconds());
+//            currentTimeInSec += skipMilliseconds;
+//            int newFrame = (int) (currentTimeInSec * currentSong.getFrameRatePerMilliseconds());
 //            currentFrame = newFrame;
 //            pressedNext = true;
 //            stop();
@@ -467,7 +485,7 @@ public class CustomPlayer extends PlaybackListener {
 //            player = new AdvancedPlayer(bufferedInputStream);
 //            player.setPlayBackListener(this);
 //            startMusicThread();
-//            gui.setPlaybackSliderValue(newFrame, currentTimeInMilli);
+//            gui.setPlaybackSliderValue(newFrame, currentTimeInSec);
 //        }
 //    } catch (Exception e) {
 //        JOptionPane.showMessageDialog(null, "Error skipping forward in mp3 file");
@@ -492,20 +510,25 @@ public class CustomPlayer extends PlaybackListener {
                         e.printStackTrace();
                     }
                 }
-
-                while(!isPaused && !songFinished && !pressedNext && !pressedPrev){
+                
+                while(!isPaused && !songFinished && !pressedNext && !pressedPrev && !pressedStop){
                     try{
-                        // increment current time milli
-                        currentTimeInMilli++;
+                        if(songSelectedFromRecentSongs && !isPlaying){
+                            songSelectedFromRecentSongs = false;
+                            break;
+                        }
+                        
+                        // increment current time in seconds (as milliseconds is making too many calculations, making it slow)
+                        currentTimeInSec += 1000;
 
                         // calculate into frame value
-                        int calculatedFrame = (int) (currentTimeInMilli * currentSong.getFrameRatePerMilliseconds());
+                        int calculatedFrame = (int) (currentTimeInSec * currentSong.getFrameRatePerMilliseconds());
 
                         // update gui
-                        gui.setPlaybackSliderValue(calculatedFrame, currentTimeInMilli);
+                        gui.setPlaybackSliderValue(calculatedFrame, currentTimeInSec/ 1000);
 
-                        // mimic 1 millisecond using thread.sleep
-                        Thread.sleep(1);
+                        // mimic 1 second using thread.sleep
+                        Thread.sleep(1000);
                     }catch(Exception e){
                         e.printStackTrace();
                     }

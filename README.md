@@ -15,13 +15,18 @@ Features:
 - shuffle, repeat
 - controls menu
 - recently played 10 songs
-
-(need to)
-
-
 - session persistence with playlist
 - keybord shortcuts - play with "SPACE" rest are done
 - if same mp3 file uploaded
+
+(need to)
+
+---only features left----
+- volume implementation
+
+- skip forward and skip backward
+
+- progressive bar skipping seconds because of flags incorrecty updating
 
 Bugs:
 
@@ -33,10 +38,22 @@ current index is based on the first order read from MySQL.
 
 3) same as above but with adding, add new song to playlist, it should be added to main library , not updating in GUI, but working fine in DB
 
-4) space bar accessible key for play song
+4) space bar accessible key for play song (done)
 
-5) need to integrate volume
 
-6) need to adjust progressive bar UI and timing
+5) drag and drop is adding 2 files to the table (done)
 
-7) drag and drop is adding 2 files to the table (done)
+6) skip forward and skip backward associated with next and previous
+
+7) clicking next on last song should come to first same with previous (done)
+
+8) if pause if clicked, its adding to recently played one more time. if song selected from recents (some other song is playing and added 2 times in recents)
+
+9) when application closed, the recents list getting changed on startup (done)
+
+10) progress bar not moving correctly, and for some songs its not working (working fine if stop is clicked before playimg new song)
+
+11) error while playerFinished, and next, and stopped, the coordination is not correct.
+
+12) progressive bar UI corrected(done)
+

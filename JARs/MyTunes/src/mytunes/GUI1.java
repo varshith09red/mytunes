@@ -5,6 +5,7 @@ import java.awt.datatransfer.*;
 import java.awt.dnd.*;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -346,6 +347,9 @@ public class GUI1 extends javax.swing.JFrame{
         songAuthorLbl.setForeground(new java.awt.Color(255, 255, 255));
         songAuthorLbl.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         songAuthorLbl.setText("Author");
+        songAuthorLbl.setMaximumSize(new java.awt.Dimension(14, 14));
+        songAuthorLbl.setMinimumSize(new java.awt.Dimension(14, 14));
+        songAuthorLbl.setPreferredSize(new java.awt.Dimension(14, 14));
 
         javax.swing.GroupLayout SongNamejPanelLayout = new javax.swing.GroupLayout(SongNamejPanel);
         SongNamejPanel.setLayout(SongNamejPanelLayout);
@@ -379,10 +383,10 @@ public class GUI1 extends javax.swing.JFrame{
 //        progressBarjPanel.add(startTimerLbl);
 
         progressBarjSlider.setValue(0);
-        progressBarjSlider.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+//        progressBarjSlider.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         progressBarjSlider.setDebugGraphicsOptions(javax.swing.DebugGraphics.NONE_OPTION);
         progressBarjSlider.setPreferredSize(new java.awt.Dimension(300, 80));
-//        progressBarjPanel.add(progressBarjSlider);
+//        progressBarjPanel.add(progressBarjSlider, BorderLayout.CENTER);
 
         stopTimerLbl.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         stopTimerLbl.setText("0:00:00");
@@ -394,12 +398,14 @@ public class GUI1 extends javax.swing.JFrame{
         progressBarjPanelLayout.setHorizontalGroup(
             progressBarjPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
             .addGroup(progressBarjPanelLayout.createSequentialGroup()
-                .addGap(100, 100, 650)
+//                .addGap(100, 100, 650)
+                .addGap(30, 30, 30)
                 .addComponent(startTimerLbl, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(30, 30, 30)
-                .addComponent(progressBarjSlider, javax.swing.GroupLayout.PREFERRED_SIZE, 415, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(progressBarjSlider, javax.swing.GroupLayout.PREFERRED_SIZE, 620, 2000)
                 .addGap(30, 30, 30)
-                .addComponent(stopTimerLbl, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(stopTimerLbl, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(30, 30, 30))
         );
         progressBarjPanelLayout.setVerticalGroup(
             progressBarjPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
@@ -420,7 +426,8 @@ public class GUI1 extends javax.swing.JFrame{
                     int selectedRow = songTable.getSelectedRow();
                     if (selectedRow != -1) {
                         int songIndex = songTable.convertRowIndexToModel(selectedRow);
-                        System.out.println("GUI selected SOng: "+ songTableModel.getValueAt(songIndex, 7));
+                        System.out.println("GUI Table Selected Song: "+ songTableModel.getValueAt(songIndex, 7));
+                        player.songSelectedFromRecentSongs = true;
                         player.setCurrentSongIndex(songIndex);
                     }
                 }
@@ -544,7 +551,7 @@ public class GUI1 extends javax.swing.JFrame{
 //                        songTableModel.addSong(song);
                     }
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(GUI1.this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
@@ -605,7 +612,8 @@ public class GUI1 extends javax.swing.JFrame{
         
         ControlsMenu.setText("Controls");
         
-        InputMap inputMap = songTable.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+//        songTable.setFocusable(true);
+        InputMap inputMap = songTable.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         ActionMap actionMap = songTable.getActionMap();
         
         KeyStroke playSongkeyStroke = KeyStroke.getKeyStroke("SPACE");
@@ -619,6 +627,16 @@ public class GUI1 extends javax.swing.JFrame{
                 playActionPerformed(e);
             }
         });
+        
+//        songTable.addKeyListener(new java.awt.event.KeyAdapter() {
+//            public void keyPressed(java.awt.event.KeyEvent evt) {
+////                System.out.println("Key pressed: " + KeyEvent.getKeyText(evt.getKeyCode()));
+//                if (evt.getKeyCode() == KeyEvent.VK_SPACE) {
+//                    System.out.println("Space key pressed");
+//                    playActionPerformed(null); // Call the play action
+//                }
+//            }
+//        });
         
         playControl.setText("Play");
         playControl.addActionListener((java.awt.event.ActionEvent evt) -> {
@@ -663,7 +681,7 @@ public class GUI1 extends javax.swing.JFrame{
         });
         previousControl.setText("Previous");
         previousControl.addActionListener((java.awt.event.ActionEvent evt) -> {
-            deleteSongMenuItemActionPerformed(evt);
+            previousActionPerformed(evt);
         });
         previousControl.setAccelerator(prevSongkeyStroke);
         ControlsMenu.add(previousControl);
@@ -782,20 +800,24 @@ public class GUI1 extends javax.swing.JFrame{
 
     //need to edit this
     private void playASongMenuItemActionPerformed(java.awt.event.ActionEvent evt) {                                                  
-        JFileChooser fileChooser = new JFileChooser();
-        int result = fileChooser.showOpenDialog(GUI1.this);
-        if (result == JFileChooser.APPROVE_OPTION) {
-            File file = fileChooser.getSelectedFile();
-            Song song = player.extractSongFromFile(file);
-            if (song != null) {
-                database.addSong(song);
-                songTableModel.addSong(song);
-                refreshSongTable();
-                player.setCurrentSong(song);
-                player.play();
-            } else {
-                JOptionPane.showMessageDialog(GUI1.this, "Failed to extract ID3 tags from the selected file.", "Error", JOptionPane.ERROR_MESSAGE);
+        try{
+            JFileChooser fileChooser = new JFileChooser();
+            int result = fileChooser.showOpenDialog(GUI1.this);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                File file = fileChooser.getSelectedFile();
+                Song song = player.extractSongFromFile(file);
+                if (song != null) {
+//                    database.addSong(song);
+//                    songTableModel.addSong(song);
+//                    refreshSongTable();
+                    player.setCurrentSong(song);
+                    player.play();
+                } else {
+                    JOptionPane.showMessageDialog(GUI1.this, "Failed to extract ID3 tags from the selected file.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
+        } catch (Exception e){
+            JOptionPane.showMessageDialog(GUI1.this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }                                                 
 
@@ -877,10 +899,12 @@ public class GUI1 extends javax.swing.JFrame{
     }                                         
            
     private void previousActionPerformed(java.awt.event.ActionEvent evt) {                                         
+//        player.pressedPrev = true;
         player.previous();
     }   
 
     private void nextActionPerformed(java.awt.event.ActionEvent evt) {                                     
+//        player.pressedNext = true;
         player.next();
     }                                    
 
@@ -914,7 +938,8 @@ public class GUI1 extends javax.swing.JFrame{
     }
     
 
-    private void stopActionPerformed(java.awt.event.ActionEvent evt) {                                         
+    private void stopActionPerformed(java.awt.event.ActionEvent evt) { 
+        player.pressedStop = true;
         player.stop();
     }                                                                          
     
@@ -929,37 +954,35 @@ public class GUI1 extends javax.swing.JFrame{
         }      
     }
     
-    public void setPlaybackSliderValue(int frame, int currentTimeInMilli) {
-    
-    //adjusts the timers
-    currentSong = player.getCurrentSong();
-    
-    long totalMilliseconds = currentTimeInMilli;
-    long totalSeconds = totalMilliseconds / 1000;
-    long hours = totalSeconds / 3600;
-    long minutes = (totalSeconds % 3600) / 60;
-    long seconds = totalSeconds % 60;
-    String currentTime = String.format("%d:%02d:%02d", hours, minutes, seconds);
+    public void setPlaybackSliderValue(int frame, int currentTimeInSeconds) {
+        // Get the current song
+        currentSong = player.getCurrentSong();
+        if (currentSong == null) return;
 
-    // Update elapsed time label
-    startTimerLbl.setText(currentTime);
+        // Calculate elapsed time
+        long totalSeconds = currentTimeInSeconds;
+        long hours = totalSeconds / 3600;
+        long minutes = (totalSeconds % 3600) / 60;
+        long seconds = totalSeconds % 60;
+        String currentTime = String.format("%d:%02d:%02d", hours, minutes, seconds);
 
-    // Calculate remaining time
-    long songLengthMilliseconds = currentSong.getMp3File().getLengthInMilliseconds();
-    long remainingMilliseconds = songLengthMilliseconds - totalMilliseconds;
-    long remainingSeconds = remainingMilliseconds / 1000;
-    long remainingHours = remainingSeconds / 3600;
-    long remainingMinutes = (remainingSeconds % 3600) / 60;
-    long remainingSecs = remainingSeconds % 60;
-    String remainingTime = String.format("%d:%02d:%02d", remainingHours, remainingMinutes, remainingSecs);
+        // Calculate remaining time
+        long songLengthSeconds = currentSong.getMp3File().getLengthInMilliseconds() / 1000;
+        long remainingSeconds = songLengthSeconds - totalSeconds;
+        long remainingHours = remainingSeconds / 3600;
+        long remainingMinutes = (remainingSeconds % 3600) / 60;
+        long remainingSecs = remainingSeconds % 60;
+        String remainingTime = String.format("%d:%02d:%02d", remainingHours, remainingMinutes, remainingSecs);
 
-    // Update remaining time label
-    stopTimerLbl.setText(remainingTime);
-    
-    //updates the progressBar position   
-    progressBarjSlider.setValue(frame);
-}
+        // Update elapsed time label
+        startTimerLbl.setText(currentTime);
 
+        // Update remaining time label
+        stopTimerLbl.setText(remainingTime);
+
+        // Update the progress bar position
+        progressBarjSlider.setValue(currentTimeInSeconds);
+    }
 
     public void updateSongTitleAndArtist(Song song){
         songNameLbl.setText(song.getTitle());
@@ -968,7 +991,7 @@ public class GUI1 extends javax.swing.JFrame{
     
     public void updatePlaybackSlider(Song song){
         // update max count for slider
-        progressBarjSlider.setMaximum(song.getMp3File().getFrameCount());
+        progressBarjSlider.setMaximum((int) (song.getMp3File().getLengthInMilliseconds() / 1000));
 
         // create the song length label
         Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
@@ -978,7 +1001,7 @@ public class GUI1 extends javax.swing.JFrame{
         stopTimerLbl.setText(song.getSongLength());
 
         labelTable.put(0, startTimerLbl);
-        labelTable.put(song.getMp3File().getFrameCount(), stopTimerLbl);
+        labelTable.put(progressBarjSlider.getMaximum(), stopTimerLbl);
 
     }
     
@@ -1009,6 +1032,7 @@ public class GUI1 extends javax.swing.JFrame{
             recentSongsItem.addActionListener(new java.awt.event.ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
+                    System.out.println("recentSongs CLicked: "+song.getTitle());
                     player.setCurrentSong(song);
                     player.play();
                 }

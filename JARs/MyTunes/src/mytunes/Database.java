@@ -51,7 +51,7 @@ public class Database {
                 "year VARCHAR(4)," +
                 "genre VARCHAR(255)," +
                 "comment TEXT," +
-                "filePath VARCHAR(255))";
+                "filePath VARCHAR(255) UNIQUE)";
         Statement statement = connection.createStatement();
         statement.execute(createSongsTable);
         
@@ -93,8 +93,18 @@ public class Database {
         return songs;
     }
 
-    public void addSong(Song song) {
+    public void addSong(Song song) throws Exception {
         try {
+            String checkSongQuery = "SELECT * FROM songs WHERE title = ? AND filePath = ?";
+            PreparedStatement checkSongStmt = connection.prepareStatement(checkSongQuery);
+            checkSongStmt.setString(1, song.getTitle());
+            checkSongStmt.setString(2, song.getFilePath());
+            ResultSet resultSet = checkSongStmt.executeQuery();
+
+            if (resultSet.next()) {
+                throw new Exception("Song already exists in the database.");
+            }
+            
             String insertSong = "INSERT INTO songs (title, artist, album, year, genre, comment, filePath) VALUES (?, ?, ?, ?, ?, ?, ?)";
             PreparedStatement preparedStatement = connection.prepareStatement(insertSong);
             preparedStatement.setString(1, song.getTitle());
