@@ -13,7 +13,7 @@
 //import javazoom.jl.player.advanced.PlaybackListener;
 //
 //
-//public class MusicPlayer {
+//public class MusicPlayer extends PlaybackListener {
 //    private JavaSoundAudioDevice audioDevice;
 //    private Player player;
 //    private JSlider volumeSlider;
@@ -65,25 +65,25 @@
 //    }
 //
 //    private void setVolume(int volume) {
-////        if (audioDevice != null) {
-////            float volumeValue = volume / 10.0f;
-//////            audioDevice.setVolume(volumeValue);
-////
-////            System.out.println("Volume set to: " + volumeValue);
-//        JavaSoundAudioDevice jsAudio = (JavaSoundAudioDevice) audio;
-//        jsAudio.setLineGain(volume);
+//        if (audioDevice != null) {
+//            float volumeValue = volume / 10.0f;
+////            audioDevice.setVolume(volumeValue);
+//
+//            System.out.println("Volume set to: " + volumeValue);
+//            JavaSoundAudioDevice jsAudio = (JavaSoundAudioDevice) audio;
+//            jsAudio.setLineGain(volume);
 //        }
 //    }
 //
-////    @Override
-////    public void playbackStarted(PlaybackEvent e){
-////        System.out.println("Playback Started");
-////    }
-////    
-////    @Override
-////    public void playbackFinished(PlaybackEvent e){
-////        System.out.println("Playback Finished");
-////    }
+//    @Override
+//    public void playbackStarted(PlaybackEvent e){
+//        System.out.println("Playback Started");
+//    }
+//    
+//    @Override
+//    public void playbackFinished(PlaybackEvent e){
+//        System.out.println("Playback Finished");
+//    }
 //    public static void main(String[] args) {
 //        SwingUtilities.invokeLater(MusicPlayer::new);
 //    }

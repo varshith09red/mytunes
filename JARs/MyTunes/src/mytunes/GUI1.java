@@ -269,10 +269,10 @@ public class GUI1 extends javax.swing.JFrame{
             previousActionPerformed(evt);
         });
 
-        volumeSlider.setBackground(new java.awt.Color(255, 255, 255));
-        volumeSlider.setForeground(new java.awt.Color(51, 153, 255));
+//        volumeSlider.setBackground(new java.awt.Color(0, 0, 0));
+        volumeSlider.setForeground(new java.awt.Color(0, 0, 0));
         volumeSlider.setPaintLabels(true);
-        volumeSlider.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Volume", javax.swing.border.TitledBorder.CENTER, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Times New Roman", 0, 18), new java.awt.Color(51, 204, 255))); // NOI18N
+        volumeSlider.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Volume", javax.swing.border.TitledBorder.CENTER, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Times New Roman", 0, 18), new java.awt.Color(0, 0, 0))); // NOI18N
         volumeSlider.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         volumeSlider.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent evt) {
@@ -346,7 +346,7 @@ public class GUI1 extends javax.swing.JFrame{
         songAuthorLbl.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         songAuthorLbl.setForeground(new java.awt.Color(255, 255, 255));
         songAuthorLbl.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        songAuthorLbl.setText("Author");
+        songAuthorLbl.setText("Artist");
         songAuthorLbl.setMaximumSize(new java.awt.Dimension(14, 14));
         songAuthorLbl.setMinimumSize(new java.awt.Dimension(14, 14));
         songAuthorLbl.setPreferredSize(new java.awt.Dimension(14, 14));
@@ -660,6 +660,23 @@ public class GUI1 extends javax.swing.JFrame{
             }
         });
         
+//        // Long press Ctrl + Right Arrow for skip forward
+//        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.CTRL_DOWN_MASK, true), "skipForwardStart");
+//        actionMap.put("skipForwardStart", new AbstractAction() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                player.startLongPressTimer();
+//            }
+//        });
+//
+//        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.CTRL_DOWN_MASK, false), "skipForwardStop");
+//        actionMap.put("skipForwardStop", new AbstractAction() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                player.stopLongPressTimer();
+//            }
+//        });
+        
         nextControl.setText("Next");
         nextControl.addActionListener((java.awt.event.ActionEvent evt) -> {
             nextActionPerformed(evt);
@@ -679,6 +696,24 @@ public class GUI1 extends javax.swing.JFrame{
                 previousActionPerformed(e);
             }
         });
+        
+//        // Long press Ctrl + Left Arrow for skip backward
+//        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, KeyEvent.CTRL_DOWN_MASK, true), "skipBackwardStart");
+//        actionMap.put("skipBackwardStart", new AbstractAction() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                player.startLongPressTimer();
+//            }
+//        });
+//
+//        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, KeyEvent.CTRL_DOWN_MASK, false), "skipBackwardStop");
+//        actionMap.put("skipBackwardStop", new AbstractAction() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                player.stopLongPressTimer();
+//            }
+//        });
+        
         previousControl.setText("Previous");
         previousControl.addActionListener((java.awt.event.ActionEvent evt) -> {
             previousActionPerformed(evt);
@@ -877,26 +912,40 @@ public class GUI1 extends javax.swing.JFrame{
         int currentVolume = volumeSlider.getValue();
         int newVolume = Math.min(currentVolume + 5, 100); // Ensure volume doesn't exceed 100%
         volumeSlider.setValue(newVolume);
-        float gain = (float) (Math.log(newVolume / 100.0) / Math.log(10.0) * 20.0);  // Convert to decibels
-        player.setVolume((int) gain);
+        setVolumeForPlayer(newVolume);
     }
 
     private void decreaseVolume() {
         int currentVolume = volumeSlider.getValue();
         int newVolume = Math.max(currentVolume - 5, 0); // Ensure volume doesn't go below 0%
         volumeSlider.setValue(newVolume);
-        float gain = (float) (Math.log(newVolume / 100.0) / Math.log(10.0) * 20.0);  // Convert to decibels
-        player.setVolume((int) gain);
+        setVolumeForPlayer(newVolume);
     }
-    
+
     private void volumeSliderStateChanged(ChangeEvent evt) {                                          
         JSlider source = (JSlider) evt.getSource();
         if (!source.getValueIsAdjusting()) {
-            int volume = (int) source.getValue();
-            float gain = (float) (Math.log(volume / 100.0) / Math.log(10.0) * 20.0);  // Convert to decibels
-            player.setVolume((int) gain);
+            int volume = source.getValue();
+            setVolumeForPlayer(volume);
         }
-    }                                         
+    }
+
+    private void setVolumeForPlayer(int sliderValue) {
+        // Map slider value (0-100) to decibel range (-80 dB to 20 dB)
+        float minDecibels = -30.0f;  // Minimum volume (corresponds to slider value 0)
+        float maxDecibels = 20.0f;   // Maximum volume (corresponds to slider value 100)
+        float range = maxDecibels - minDecibels;
+        if(sliderValue == 0) minDecibels = -80.0f;
+        // Linear interpolation of sliderValue into the range of minDecibels to maxDecibels
+        float gain = minDecibels + (sliderValue / 100.0f) * range;
+
+        try {
+            player.setVolume((int) gain);
+            System.out.printf("Volume set to: %.2f dB (Slider value: %d)\n", gain, sliderValue);
+        } catch (Exception e) {
+            System.err.println("Error setting volume: " + e.getMessage());
+        }
+    }                              
            
     private void previousActionPerformed(java.awt.event.ActionEvent evt) {                                         
 //        player.pressedPrev = true;
@@ -1169,6 +1218,7 @@ public class GUI1 extends javax.swing.JFrame{
                 public void windowClosing(java.awt.event.WindowEvent e) {
                     System.out.println("Window is closing, removing the listener");
                     database.removeListener(playlistWindow);
+                    playlistWindow.player.stop();
                 }
             });
             
@@ -1189,29 +1239,67 @@ public class GUI1 extends javax.swing.JFrame{
             playlistWindow.setVisible(true);
             
             // Drag and Drop
-            playlistWindow.songTable.setDropTarget(new DropTarget() {
-            @Override
-            public synchronized void drop(DropTargetDropEvent dtde) {
-                try {
-                    if (dtde.isDataFlavorSupported(new DataFlavor(Song.class, "Songs"))) {
-                        dtde.acceptDrop(DnDConstants.ACTION_MOVE);
-                        Transferable transferable = dtde.getTransferable();
-                        List<Song> droppedSongs = (List<Song>) transferable.getTransferData(new DataFlavor(Song.class, "Songs"));
-                        for(Song song: droppedSongs){
-                            playlistWindow.playlistController.addSongToPlaylist(song, playlistWindow.playlistSelectedNode);
-                        }
-                        dtde.dropComplete(true);
-                        playlistWindow.refreshSongTable();
-                    } else {
-                        dtde.rejectDrop();
+//            playlistWindow.songTable.setDropTarget(new DropTarget() {
+//            @Override
+//            public synchronized void drop(DropTargetDropEvent dtde) {
+//                try {
+//                    if (dtde.isDataFlavorSupported(new DataFlavor(Song.class, "Songs"))) {
+//                        dtde.acceptDrop(DnDConstants.ACTION_MOVE);
+//                        Transferable transferable = dtde.getTransferable();
+//                        List<Song> droppedSongs = (List<Song>) transferable.getTransferData(new DataFlavor(Song.class, "Songs"));
+//                        for(Song song: droppedSongs){
+//                            playlistWindow.playlistController.addSongToPlaylist(song, playlistWindow.playlistSelectedNode);
+//                        }
+//                        dtde.dropComplete(true);
+//                        playlistWindow.refreshSongTable();
+//                    } else {
+//                        dtde.rejectDrop();
+//                    }
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                    dtde.rejectDrop();
+//                }
+//                }
+//            });
+
+        playlistWindow.songTable.setDropTarget(new DropTarget() {
+        @Override
+        public synchronized void drop(DropTargetDropEvent dtde) {
+            try {
+                dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
+                Transferable transferable = dtde.getTransferable();
+
+                if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                    // Handle file drop from outside the application
+                    List<File> droppedFiles = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+                    for (File file : droppedFiles) {
+                        // Extract song information from the file and add it to the library and playlist
+                        Song song = player.extractSongFromFile(file);
+                        playlistWindow.playlistController.addSongToPlaylist(song, playlistWindow.playlistSelectedNode); // Add the song to the playlist
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
+                    dtde.dropComplete(true);
+                    playlistWindow.refreshSongTable(); // Refresh the playlist view
+                    // Optionally, refresh the library view if necessary
+                    refreshSongTable();
+                } else if (dtde.isDataFlavorSupported(new DataFlavor(Song.class, "Songs"))) {
+                    // Handle internal song drop
+                    List<Song> droppedSongs = (List<Song>) transferable.getTransferData(new DataFlavor(Song.class, "Songs"));
+                    for (Song song : droppedSongs) {
+                        playlistWindow.playlistController.addSongToPlaylist(song, playlistWindow.playlistSelectedNode);
+                    }
+                    dtde.dropComplete(true);
+                    playlistWindow.refreshSongTable(); // Refresh the playlist view
+                } else {
                     dtde.rejectDrop();
                 }
-                }
-            });
-            
+            } catch (Exception e) {
+                e.printStackTrace();
+                dtde.rejectDrop();
+            }
+        }
+    });
+
+
     }
     
     private class SongTransferHandler extends TransferHandler {

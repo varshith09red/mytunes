@@ -64,8 +64,8 @@ public class Database {
                 "playlist_id INT," +
                 "song_id INT," +
                 "FOREIGN KEY (playlist_id) REFERENCES playlists(id) ON DELETE CASCADE," +
-                "FOREIGN KEY (song_id) REFERENCES songs(id) ON DELETE CASCADE," + // this deletes the song from playlist_songs when a song is deleted
-                "PRIMARY KEY (playlist_id, song_id))";
+                "FOREIGN KEY (song_id) REFERENCES songs(id) ON DELETE CASCADE )" ; // this deletes the song from playlist_songs when a song is deleted
+//                "PRIMARY KEY (playlist_id, song_id))";
         statement.execute(createPlaylistSongsTable);
     }
 
@@ -269,6 +269,7 @@ public class Database {
                 } else {
                     throw new SQLException("Failed to retrieve song ID.");
                 }
+                notifyListeners();
             }
 
             // Get playlist ID

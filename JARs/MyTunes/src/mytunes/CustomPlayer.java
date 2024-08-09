@@ -34,16 +34,22 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Properties;
+import javax.sound.sampled.SourceDataLine;
+import javazoom.jl.player.AudioDevice;
+import javazoom.jl.player.FactoryRegistry;
+import javazoom.jl.player.JavaSoundAudioDevice;
+
 public class CustomPlayer extends PlaybackListener {
 
     private AdvancedPlayer player;
-    private VolumeControlAudioDevice audioDevice;
+    private AudioDevice audioDevice;
     private String path;
     private int currentSongIndex;
     
@@ -71,7 +77,8 @@ public class CustomPlayer extends PlaybackListener {
     private int currentTimeInSec;
     private GUI1 gui;
     
-     private Timer longPressTimer;
+    private Timer longPressTimer;
+    private boolean longPressDetected;
 
     public CustomPlayer(GUI1 gui, SongTableModel songTableModel, List<Song> songs) {
         this.path = null;
@@ -87,6 +94,8 @@ public class CustomPlayer extends PlaybackListener {
         this.recentSongs = new LinkedList<>();
         this.pressedStop = false;
         this.songSelectedFromRecentSongs = false;
+        this.longPressDetected = false;
+        this.volumeControl = null;
         loadRecentSongs();
 //        initializeVolumeControl();
     }
@@ -161,9 +170,16 @@ public class CustomPlayer extends PlaybackListener {
             gui.updateSongTitleAndArtist(currentSong);
             gui.updatePlaybackSlider(currentSong);
             addRecentSong(currentSong);
-            audioDevice = new VolumeControlAudioDevice();
-            // create a new advanced player
-            player = new AdvancedPlayer(bufferedInputStream);
+            
+//            audioDevice = new VolumeControlAudioDevice();  // Use custom audio device
+            this.audioDevice = FactoryRegistry.systemRegistry().createAudioDevice();
+            if (this.audioDevice != null) {
+                initializeVolumeControl();  // Ensure volume control is initialized only if audioDevice is not null
+            } else {
+                System.out.println("AudioDevice is null. Cannot initialize volume control.");
+            }
+            player = new AdvancedPlayer(bufferedInputStream, this.audioDevice);
+//            setVolume(-12.0f);
             player.setPlayBackListener(this);
 
             // start music
@@ -398,14 +414,59 @@ public class CustomPlayer extends PlaybackListener {
     }
 
 
-    public void setVolume(int volume) {
-//        System.out.println("Volume: "+ volume);
-        if (audioDevice != null) {
-            float volumeValue = volume / 100.0f;
-            audioDevice.setVolume(volumeValue);
-            System.out.println("Volume set to: " + volumeValue);
+//    public void setVolume(int volume) {
+//        if (audioDevice != null) {
+//            float volumeValue = volume / 100.0f;
+//            audioDevice.setVolume(volumeValue);
+////            System.out.println("Volume set to: " + volumeValue);
+//        }
+//    }
+    
+    public void setVolume(float gain) throws JavaLayerException {
+        if (this.volumeControl == null) {
+            initializeVolumeControl();
+        }
+        if (this.volumeControl != null) {
+            float newGain = Math.min(Math.max(gain, volumeControl.getMinimum()), volumeControl.getMaximum());
+            System.out.println("Was: " + volumeControl.getValue() + " Will be: " + newGain);
+            volumeControl.setValue(newGain);
         }
     }
+
+    private void initializeVolumeControl() throws JavaLayerException {
+        if (this.audioDevice == null) {
+            System.out.println("AudioDevice is null. Cannot initialize volume control.");
+            return;
+        }
+
+//        this.audioDevice = FactoryRegistry.systemRegistry().createAudioDevice();
+        
+        Class<JavaSoundAudioDevice> clazz = JavaSoundAudioDevice.class;
+        Field[] fields = clazz.getDeclaredFields();
+        try {
+            SourceDataLine source;
+            for (Field field : fields) {
+                if ("source".equals(field.getName())) {
+                    field.setAccessible(true);
+                    source = (SourceDataLine) field.get(this.audioDevice);
+                    field.setAccessible(false);
+                    if (source != null) {
+                        this.volumeControl = (FloatControl) source.getControl(FloatControl.Type.MASTER_GAIN);
+                        System.out.println("VolumeControl initialized: " + (this.volumeControl != null));
+                    } else {
+                        System.out.println("SourceDataLine is null.");
+                    }
+                    return;  // Exit after setting volume control or identifying that source is null
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("VolumeControl not initialized.");
+    }
+
+
     
     private void addRecentSong(Song song) {
         if (!gui.shuffleEnabled && !isPaused) {
@@ -468,31 +529,28 @@ public class CustomPlayer extends PlaybackListener {
 //    }
 //
 //    public void skipForward() {
-//    try {
-//        int skipMilliseconds = 10000; // 10 seconds
-//        long remainingTime = currentSong.getMp3File().getLengthInMilliseconds() - currentTimeInSec;
-//        System.out.println("remainingTime: "+remainingTime);
-//        if (remainingTime <= skipMilliseconds) {
-//            next();
-//        } else {
-//            currentTimeInSec += skipMilliseconds;
-//            int newFrame = (int) (currentTimeInSec * currentSong.getFrameRatePerMilliseconds());
-//            currentFrame = newFrame;
-//            pressedNext = true;
-//            stop();
-//            FileInputStream fileInputStream = new FileInputStream(currentSong.getFilePath());
-//            BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
-//            player = new AdvancedPlayer(bufferedInputStream);
-//            player.setPlayBackListener(this);
-//            startMusicThread();
-//            gui.setPlaybackSliderValue(newFrame, currentTimeInSec);
+//        try {
+//            int skipMilliseconds = 10000; // 10 seconds
+//            long remainingTime = currentSong.getMp3File().getLengthInMilliseconds() - currentTimeInSec;
+//            if (remainingTime <= skipMilliseconds) {
+//                next();
+//            } else {
+//                currentTimeInSec += skipMilliseconds;
+//                int newFrame = (int) (currentTimeInSec * currentSong.getFrameRatePerMilliseconds());
+//                currentFrame = newFrame;
+//                pressedNext = true;
+//                stop();
+//                FileInputStream fileInputStream = new FileInputStream(currentSong.getFilePath());
+//                BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+//                player = new AdvancedPlayer(bufferedInputStream);
+//                player.setPlayBackListener(this);
+//                startMusicThread();
+//                gui.setPlaybackSliderValue(newFrame, currentTimeInSec);
+//            }
+//        } catch (Exception e) {
+//            JOptionPane.showMessageDialog(null, "Error skipping forward in mp3 file");
 //        }
-//    } catch (Exception e) {
-//        JOptionPane.showMessageDialog(null, "Error skipping forward in mp3 file");
 //    }
-//}
-
-
     
     // create a thread that will handle updating the slider
     private void startPlaybackSliderThread(){
