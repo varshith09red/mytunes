@@ -62,6 +62,7 @@ public class CustomPlayer extends PlaybackListener {
     
     private FloatControl volumeControl;
     private Song currentSong;
+    private Song currentlyPlayingSong;
     private boolean songFinished;
     public boolean pressedNext, pressedPrev, pressedStop;
     private List<Song> recentSongs;
@@ -96,6 +97,7 @@ public class CustomPlayer extends PlaybackListener {
         this.songSelectedFromRecentSongs = false;
         this.longPressDetected = false;
         this.volumeControl = null;
+        this.currentlyPlayingSong = null;
         loadRecentSongs();
 //        initializeVolumeControl();
     }
@@ -170,7 +172,7 @@ public class CustomPlayer extends PlaybackListener {
             gui.updateSongTitleAndArtist(currentSong);
             gui.updatePlaybackSlider(currentSong);
             addRecentSong(currentSong);
-            
+            currentlyPlayingSong = currentSong;
 //            audioDevice = new VolumeControlAudioDevice();  // Use custom audio device
             this.audioDevice = FactoryRegistry.systemRegistry().createAudioDevice();
             if (this.audioDevice != null) {
@@ -303,21 +305,36 @@ public class CustomPlayer extends PlaybackListener {
     
     public int getCurrentSongIndex() {
         int SongIndex = -1;
+        if (currentSong == null) {
+            return -1;
+        }
             for(Song song: songTableModel.getSortedSongs()){
                 SongIndex++;
                 if(currentSong.getId() == song.getId())
                     return SongIndex;
 
-                System.out.println("CurrentSongIndex: "+SongIndex);
+//                System.out.println("CurrentSongIndex: "+SongIndex);
+            }
+        return SongIndex;
+    }
+    
+    public int getCurrentPlayingSongIndex() {
+        int SongIndex = -1;
+            for(Song song: songTableModel.getSortedSongs()){
+                SongIndex++;
+                if(currentlyPlayingSong.getId() == song.getId())
+                    return SongIndex;
+
+//                System.out.println("Currently Playing Song Index: "+SongIndex);
             }
         return SongIndex;
     }
 
     private String getCurrentSongFilePath() {
         if (currentSongIndex >= 0 && currentSongIndex < songs.size()) {
-            currentSong = (Song)songTableModel.getValueAt(currentSongIndex,8);
+            currentSong = (Song)songTableModel.getValueAtGUI(currentSongIndex,8);
             System.out.println("currentSong: "+currentSong.getTitle());
-            return (String) songTableModel.getValueAt(currentSongIndex, 7);
+            return (String) songTableModel.getValueAtGUI(currentSongIndex, 7);
         }
         return null;
     }
@@ -509,49 +526,7 @@ public class CustomPlayer extends PlaybackListener {
             e.printStackTrace();
         }
     }
-    
-//    public void startLongPressTimer() {
-//        if (longPressTimer != null) {
-//            longPressTimer.stop();
-//        }
-//
-//        longPressTimer = new Timer(100, e -> skipForward());
-//        longPressTimer.setInitialDelay(500); // Initial delay before starting the fast skip
-//        longPressTimer.start();
-//    }
-//
-//    public void stopLongPressTimer() {
-//        if (longPressTimer != null) {
-//            System.out.println("Timer: "+longPressTimer);
-//            longPressTimer.stop();
-//            longPressTimer = null;
-//        }
-//    }
-//
-//    public void skipForward() {
-//        try {
-//            int skipMilliseconds = 10000; // 10 seconds
-//            long remainingTime = currentSong.getMp3File().getLengthInMilliseconds() - currentTimeInSec;
-//            if (remainingTime <= skipMilliseconds) {
-//                next();
-//            } else {
-//                currentTimeInSec += skipMilliseconds;
-//                int newFrame = (int) (currentTimeInSec * currentSong.getFrameRatePerMilliseconds());
-//                currentFrame = newFrame;
-//                pressedNext = true;
-//                stop();
-//                FileInputStream fileInputStream = new FileInputStream(currentSong.getFilePath());
-//                BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
-//                player = new AdvancedPlayer(bufferedInputStream);
-//                player.setPlayBackListener(this);
-//                startMusicThread();
-//                gui.setPlaybackSliderValue(newFrame, currentTimeInSec);
-//            }
-//        } catch (Exception e) {
-//            JOptionPane.showMessageDialog(null, "Error skipping forward in mp3 file");
-//        }
-//    }
-    
+        
     // create a thread that will handle updating the slider
     private void startPlaybackSliderThread(){
         new Thread(new Runnable() {

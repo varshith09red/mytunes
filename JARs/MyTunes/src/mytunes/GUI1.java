@@ -426,7 +426,7 @@ public class GUI1 extends javax.swing.JFrame{
                     int selectedRow = songTable.getSelectedRow();
                     if (selectedRow != -1) {
                         int songIndex = songTable.convertRowIndexToModel(selectedRow);
-                        System.out.println("GUI Table Selected Song: "+ songTableModel.getValueAt(songIndex, 7));
+                        System.out.println("GUI Table Selected Song: "+ songTableModel.getValueAtGUI(songIndex, 7));
                         player.songSelectedFromRecentSongs = true;
                         player.setCurrentSongIndex(songIndex);
                     }
@@ -1076,12 +1076,13 @@ public class GUI1 extends javax.swing.JFrame{
     public void updateRecentMenu() {
         playRecent.removeAll();
         List<Song> recentSongs = player.getRecentSongs();
-        for (Song song : recentSongs) {
+        for (int i = recentSongs.size() - 1; i >= 0; i--) {
+            Song song = recentSongs.get(i);
             JMenuItem recentSongsItem = new JMenuItem(song.getTitle());
             recentSongsItem.addActionListener(new java.awt.event.ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    System.out.println("recentSongs CLicked: "+song.getTitle());
+                    System.out.println("recentSongs Clicked: " + song.getTitle());
                     player.setCurrentSong(song);
                     player.play();
                 }
@@ -1091,7 +1092,7 @@ public class GUI1 extends javax.swing.JFrame{
     }
 
     public void goToCurrentSong() {
-        int currentSongIndex = player.getCurrentSongIndex();
+        int currentSongIndex = player.getCurrentPlayingSongIndex();
         if (currentSongIndex >= 0) {
             songTable.setRowSelectionInterval(currentSongIndex, currentSongIndex);
             songTable.scrollRectToVisible(songTable.getCellRect(currentSongIndex, 0, true));
@@ -1239,29 +1240,6 @@ public class GUI1 extends javax.swing.JFrame{
             playlistWindow.setVisible(true);
             
             // Drag and Drop
-//            playlistWindow.songTable.setDropTarget(new DropTarget() {
-//            @Override
-//            public synchronized void drop(DropTargetDropEvent dtde) {
-//                try {
-//                    if (dtde.isDataFlavorSupported(new DataFlavor(Song.class, "Songs"))) {
-//                        dtde.acceptDrop(DnDConstants.ACTION_MOVE);
-//                        Transferable transferable = dtde.getTransferable();
-//                        List<Song> droppedSongs = (List<Song>) transferable.getTransferData(new DataFlavor(Song.class, "Songs"));
-//                        for(Song song: droppedSongs){
-//                            playlistWindow.playlistController.addSongToPlaylist(song, playlistWindow.playlistSelectedNode);
-//                        }
-//                        dtde.dropComplete(true);
-//                        playlistWindow.refreshSongTable();
-//                    } else {
-//                        dtde.rejectDrop();
-//                    }
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                    dtde.rejectDrop();
-//                }
-//                }
-//            });
-
         playlistWindow.songTable.setDropTarget(new DropTarget() {
         @Override
         public synchronized void drop(DropTargetDropEvent dtde) {

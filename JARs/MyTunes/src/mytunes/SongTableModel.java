@@ -39,11 +39,42 @@ public class SongTableModel extends AbstractTableModel {
         return count;
     }
 
+    public Object getValueAtGUI(int rowIndex, int columnIndex) {
+        Song song = songs.get(rowIndex);
+        switch (columnIndex) {
+            case 0:
+                return song.getTitle();
+            case 1:
+                return song.getArtist();
+            case 2:
+                return song.getAlbum();
+            case 3:
+                return song.getYear();
+            case 4:
+                return song.getGenre();
+            case 5:
+                return song.getComment();
+            case 6:
+                return song.getId();
+            case 7:
+                return song.getFilePath();
+            case 8:
+                return song.getSong();
+            default:
+                return null;
+        }
+    }
+    
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         Song song = songs.get(rowIndex);
-//        int visibleColumnIndex = getVisibleColumnIndex(columnIndex);
-        switch (columnIndex) {
+        int visibleColumnIndex = getVisibleColumnIndex(columnIndex);
+    
+        // If no visible column found, return null
+        if (visibleColumnIndex == -1) {
+            return null;
+        }
+        switch (visibleColumnIndex) {
             case 0:
                 return song.getTitle();
             case 1:
